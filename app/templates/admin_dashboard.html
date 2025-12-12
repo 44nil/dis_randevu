@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}Hekim Paneli · Diş Kliniği{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold text-gray-800">Hoş Geldiniz, Hocam 👋</h1>
+        <div class="text-sm text-gray-500">
+            Bugün: <span class="font-medium text-gray-700">{{ now.strftime('%d.%m.%Y') if now else '' }}</span>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-blue-50 text-blue-600 rounded-xl">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                </div>
+                <div>
+                    <div class="text-gray-500 text-sm">Bugünkü Randevular</div>
+                    <div class="text-2xl font-bold text-gray-800">{{ appointments|length }}</div>
+                </div>
+            </div>
+        </div>
+
+        <a href="{{ url_for('admin.calendar_view') }}" class="group bg-gradient-to-br from-indigo-500 to-purple-600 p-6 rounded-2xl shadow-md hover:shadow-lg transition-all transform hover:-translate-y-1">
+            <div class="flex items-center justify-between text-white">
+                <div>
+                    <div class="text-indigo-100 text-sm">Takvimi Yönet</div>
+                    <div class="text-xl font-bold">Randevu Takvimi &rarr;</div>
+                </div>
+                <div class="p-2 bg-white/20 rounded-lg group-hover:bg-white/30 transition">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-50 flex justify-between items-center">
+            <h3 class="font-semibold text-gray-800">Bugünün Programı</h3>
+        </div>
+        
+        <div class="p-0">
+            {% if appointments %}
+            <table class="w-full text-left">
+                <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
+                    <tr>
+                        <th class="px-6 py-3">Saat</th>
+                        <th class="px-6 py-3">Hasta</th>
+                        <th class="px-6 py-3">İşlem</th>
+                        <th class="px-6 py-3">Durum</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for appt in appointments %}
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-6 py-4 font-medium text-gray-900">
+                            {{ appt.start_time.strftime('%H:%M') }}
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if appt.guest_name %}
+                                <span class="text-orange-600 font-medium">{{ appt.guest_name }}</span> 
+                                <span class="text-xs text-gray-400">(Misafir)</span>
+                            {% else %}
+                                {{ appt.patient.full_name }}
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-gray-600">{{ appt.title }}</td>
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-1 text-xs rounded-full 
+                                {% if appt.status == 'confirmed' %}bg-green-100 text-green-700
+                                {% elif appt.status == 'cancelled' %}bg-red-100 text-red-700
+                                {% else %}bg-gray-100 text-gray-700{% endif %}">
+                                {{ appt.status }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="p-8 text-center text-gray-400">
+                <p>Bugün için henüz kayıtlı randevu yok.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

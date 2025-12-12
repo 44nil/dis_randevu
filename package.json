@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@clerk/nextjs": "^6.36.2",
+    "dayjs": "^1.11.13"
+  }
+}

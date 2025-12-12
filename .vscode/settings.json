@@ -1,0 +1,9 @@
+{
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/*.pyc": true,
+    "debug_*.py": true,
+    "debug_*.html": true,
+    "check_*.py": true
+  }
+}

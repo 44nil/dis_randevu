@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block title %}Profilim · Pilates Studio{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto mt-8">
+  
+  <div class="rounded-2xl bg-white/80 p-6 shadow mb-8">
+    <h1 class="text-2xl font-bold mb-2">Profilim</h1>
+    {% if member %}
+      <div class="mb-2 text-stone-700"><b>Ad Soyad:</b> {{ member.full_name }}</div>
+      <div class="mb-2 text-stone-700"><b>Kalan Seans:</b> {{ member.credits }}</div>
+      <div class="mb-2 text-stone-700"><b>Kayıt Tarihi:</b> {{ member.created_at.strftime('%d.%m.%Y') if member.created_at else '-' }}</div>
+    {% else %}
+      <div class="text-stone-500">Üye bilgisi bulunamadı.</div>
+    {% endif %}
+  </div>
+
+  <div class="rounded-2xl bg-white/80 p-6 shadow">
+    <h2 class="text-lg font-semibold mb-3">Vücut Analizi Geçmişi</h2>
+    
+    {% if measurements %}
+    <div class="overflow-x-auto rounded-xl border border-stone-100">
+      <table class="w-full text-left text-sm text-stone-600">
+        <thead class="bg-stone-50 text-xs uppercase text-stone-500">
+          <tr>
+            <th class="px-4 py-3 font-medium">Tarih</th>
+            <th class="px-4 py-3 font-medium">Kilo</th>
+            <th class="px-4 py-3 font-medium">Bel</th>
+            <th class="px-4 py-3 font-medium">Kalça</th>
+            <th class="px-4 py-3 font-medium">Göğüs</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-stone-100">
+          {% for m in measurements %}
+          <tr class="hover:bg-stone-50/50 transition-colors">
+            <td class="px-4 py-3 font-medium text-stone-800">
+              {{ m.date.strftime('%d.%m.%Y') }}
+            </td>
+            <td class="px-4 py-3">
+              <span class="inline-flex items-center gap-1 rounded-lg bg-pink-100 px-2 py-1 text-pink-700 font-medium text-xs">
+                {{ m.weight }} kg
+              </span>
+            </td>
+            <td class="px-4 py-3">
+               <span class="inline-flex items-center gap-1 rounded-lg bg-pink-100 px-2 py-1 text-pink-700 font-medium text-xs">
+                {{ m.waist or '-' }} cm
+              </span>
+            </td>
+            <td class="px-4 py-3">
+               <span class="inline-flex items-center gap-1 rounded-lg bg-pink-100 px-2 py-1 text-pink-700 font-medium text-xs">
+                {{ m.hip or '-' }} cm
+              </span>
+            </td>
+            <td class="px-4 py-3">
+               <span class="inline-flex items-center gap-1 rounded-lg bg-pink-100 px-2 py-1 text-pink-700 font-medium text-xs">
+                {{ m.chest or '-' }} cm
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-6 border-2 border-dashed border-stone-200 rounded-xl">
+      <div class="text-2xl mb-2">📉</div>
+      <p class="text-stone-500 text-sm">Henüz kayıtlı ölçümünüz bulunmuyor.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="rounded-2xl border border-white/50 bg-white/60 backdrop-blur p-5 mt-8">
+    <div class="mb-3 text-sm font-medium text-stone-600">Son dönem antrenman takibi</div>
+    
+    <div class="overflow-x-auto pb-2">
+      <div class="heatmap-grid" style="display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, 1fr); gap: 3px; justify-content: center; min-width: max-content;">
+        {% for week in weeks|reverse %}
+          {% for day in week %}
+            {% set count = day.count | int %}
+            
+            {% if count > 0 %}
+              {% set bg_color = 'bg-[#db2777]' %} 
+            {% else %}
+              {% set bg_color = 'bg-[#ebedf0]' %}
+            {% endif %}
+
+            <div class="{{ bg_color }} w-[12px] h-[12px] rounded-[2px] border border-black/5 hover:ring-1 hover:ring-stone-400 transition-all cursor-pointer relative group"
+                 title="{{ day.date.strftime('%d.%m.%Y') }}: {{ 'Katıldı' if count > 0 else 'Katılmadı' }}">
+            </div>
+          {% endfor %}
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="flex items-center justify-end gap-4 mt-3 text-[10px] text-stone-500">
+      <div class="flex items-center gap-1">
+        <span class="w-[10px] h-[10px] bg-[#ebedf0] rounded-[2px] border border-black/5"></span>
+        <span>Pasif</span>
+      </div>
+      <div class="flex items-center gap-1">
+        <span class="w-[10px] h-[10px] bg-[#db2777] rounded-[2px] border border-black/5"></span>
+        <span>Antrenman Yapıldı</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

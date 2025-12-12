@@ -1,0 +1,321 @@
+{% extends 'base.html' %}
+
+{% block title %}Randevu Takvimi · Diş Kliniği{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 h-[85vh] flex flex-col">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">Randevu Takvimi</h2>
+        <button onclick="openCreateModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-md flex items-center gap-2">
+            <i class="fa-solid fa-plus"></i> Yeni Randevu
+        </button>
+    </div>
+    <div id="calendar" class="flex-grow"></div>
+</div>
+
+<div id="createModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 transition-opacity">
+    <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden transform transition-all max-h-[90vh] overflow-y-auto">
+        <div class="bg-indigo-600 px-6 py-4 flex justify-between items-center text-white">
+            <h3 class="font-bold text-lg">Yeni Randevu Oluştur</h3>
+            <button onclick="closeModal('createModal')" class="text-2xl hover:text-indigo-200">&times;</button>
+        </div>
+        <form id="createForm" class="p-6 space-y-5">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Hasta Adı</label>
+                    <input type="text" name="guest_name" required class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition" placeholder="Ad Soyad">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Telefon</label>
+                    <input type="tel" name="guest_phone" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition" placeholder="05XX...">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Yapılacak İşlem</label>
+                <select name="title" class="w-full border border-gray-300 rounded-lg p-2.5 bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition">
+                    <option value="Muayene">Muayene (30 dk)</option> <option value="Diş Taşı Temizliği">Diş Taşı Temizliği (30 dk)</option>
+                    <option value="Diş Çekimi">Diş Çekimi (30 dk)</option>
+                    <option value="Dolgu">Dolgu (45 dk)</option>
+                    <option value="Kanal Tedavisi">Kanal Tedavisi (60 dk)</option>
+                    <option value="İmplant">İmplant (90 dk)</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Tarih</label>
+                    <input type="date" id="createDate" name="appt_date" required class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Saat</label>
+                    <div class="relative">
+                        <input type="time" id="createTime" name="appt_time" required 
+                               class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition cursor-pointer"
+                               onclick="showTimeSlots('create')"
+                               autocomplete="off">
+                        <div class="absolute right-3 top-3 text-gray-400 pointer-events-none">
+                            <i class="fa-regular fa-clock"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="createTimeSlots" class="hidden grid grid-cols-4 gap-2 bg-gray-50 p-3 rounded-lg border border-gray-200 animate-fade-in"></div>
+
+            <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Notlar</label>
+                <textarea name="notes" rows="2" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm"></textarea>
+            </div>
+
+            <div class="flex justify-end pt-2">
+                <button type="submit" class="bg-indigo-600 text-white px-6 py-2.5 rounded-lg hover:bg-indigo-700 font-medium shadow-md transition transform active:scale-95">Randevu Oluştur</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="editModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 transition-opacity">
+    <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden transform transition-all max-h-[90vh] overflow-y-auto">
+        <div class="bg-gray-800 px-6 py-4 flex justify-between items-center text-white">
+            <h3 class="font-bold text-lg">Randevu Detayı</h3>
+            <button onclick="closeModal('editModal')" class="text-2xl hover:text-gray-300">&times;</button>
+        </div>
+        <form id="editForm" class="p-6 space-y-5">
+            <input type="hidden" id="editId">
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Hasta Adı</label>
+                    <input type="text" id="editName" name="guest_name" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-gray-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Telefon</label>
+                    <input type="tel" id="editPhone" name="guest_phone" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-gray-500 outline-none">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">İşlem</label>
+                <select id="editTitle" name="title" class="w-full border border-gray-300 rounded-lg p-2.5 bg-white focus:ring-2 focus:ring-gray-500 outline-none">
+                    <option value="Muayene">Muayene (30 dk)</option> <option value="Diş Taşı Temizliği">Diş Taşı Temizliği (30 dk)</option>
+                    <option value="Diş Çekimi">Diş Çekimi (30 dk)</option>
+                    <option value="Dolgu">Dolgu (45 dk)</option>
+                    <option value="Kanal Tedavisi">Kanal Tedavisi (60 dk)</option>
+                    <option value="İmplant">İmplant (90 dk)</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Tarih</label>
+                    <input type="date" id="editDate" name="appt_date" required class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-gray-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Saat</label>
+                    <div class="relative">
+                        <input type="time" id="editTime" name="appt_time" required 
+                               class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-gray-500 outline-none cursor-pointer"
+                               onclick="showTimeSlots('edit')"
+                               autocomplete="off">
+                        <div class="absolute right-3 top-3 text-gray-400 pointer-events-none">
+                            <i class="fa-regular fa-clock"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="editTimeSlots" class="hidden grid grid-cols-4 gap-2 bg-gray-50 p-3 rounded-lg border border-gray-200 animate-fade-in"></div>
+
+            <div>
+                <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Notlar</label>
+                <textarea id="editNotes" name="notes" rows="2" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-gray-500 outline-none text-sm"></textarea>
+            </div>
+
+            <div class="flex justify-between items-center pt-4 border-t border-gray-100 mt-2">
+                <div class="flex gap-2">
+                     <button type="button" onclick="deleteAppointment()" class="text-red-500 hover:text-red-700 text-sm font-semibold flex items-center gap-1 transition">
+                        <i class="fa-solid fa-trash"></i> Sil
+                    </button>
+                </div>
+
+                <div class="flex gap-2">
+                    <button type="button" id="patientCardBtn" class="bg-blue-100 text-blue-700 px-3 py-2 rounded-lg hover:bg-blue-200 transition hidden" title="Hasta Kartı">
+                        <i class="fa-solid fa-id-card"></i> Hasta Kartı
+                    </button>
+
+                    <button type="button" onclick="closeModal('editModal')" class="bg-gray-100 text-gray-600 px-4 py-2 rounded-lg hover:bg-gray-200 transition">Kapat</button>
+                    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 shadow-md transition">Güncelle</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Global Takvim Değişkeni (Erişilebilir olsun diye dışarı aldık)
+    var calendar; 
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var calendarEl = document.getElementById('calendar');
+        calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'timeGridWeek',
+            locale: 'tr',
+            firstDay: 1,
+            slotMinTime: '09:00:00',
+            slotMaxTime: '19:00:00',
+            slotDuration: '00:30:00',
+            allDaySlot: false,
+            headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
+            events: '/api/appointments', // Veri kaynağı
+            dateClick: function(info) { openCreateModal(info.dateStr); },
+            eventClick: function(info) { openEditModal(info.event); }
+        });
+        calendar.render();
+
+        // Form Submit Olayları
+        document.getElementById('createForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            await sendData('/api/appointments/create', new FormData(this), 'createModal');
+        });
+
+        document.getElementById('editForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('editId').value;
+            await sendData(`/api/appointments/${id}/update`, new FormData(this), 'editModal');
+        });
+    });
+
+    // --- OPTİMİZE EDİLMİŞ VERİ GÖNDERME ---
+    async function sendData(url, formData, modalId) {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        
+        // Butonu "Kaydediliyor..." yap (Geri bildirim için)
+        const btn = document.querySelector(`#${modalId} button[type="submit"]`);
+        const originalText = btn.innerText;
+        btn.innerText = "İşleniyor...";
+        btn.disabled = true;
+
+        try {
+            const res = await fetch(url, { 
+                method: 'POST', 
+                headers: { 'X-CSRFToken': csrfToken },
+                body: formData 
+            });
+            const data = await res.json();
+            
+            if (data.status === 'success') {
+                // SAYFAYI YENİLEME YOK! SADECE TAKVİMİ GÜNCELLE
+                closeModal(modalId);
+                calendar.refetchEvents(); // <--- SİHİRLİ KOMUT (Milisaniyede yeniler)
+                
+                // Formu temizle (Sadece create ise)
+                if(modalId === 'createModal') document.getElementById('createForm').reset();
+                
+            } else {
+                alert('Hata: ' + data.message);
+            }
+        } catch (err) { 
+            console.error(err); 
+            alert('Sunucu hatası!'); 
+        } finally {
+            // Butonu eski haline getir
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    // --- Modal İşlemleri (Aynı kaldı) ---
+    function openCreateModal(dateStr) {
+        if(dateStr) {
+            let date = new Date(dateStr);
+            let yyyy = date.getFullYear();
+            let mm = String(date.getMonth() + 1).padStart(2, '0');
+            let dd = String(date.getDate()).padStart(2, '0');
+            let hh = String(date.getHours()).padStart(2, '0');
+            let min = String(date.getMinutes()).padStart(2, '0');
+
+            document.getElementById('createDate').value = `${yyyy}-${mm}-${dd}`;
+            document.getElementById('createTime').value = `${hh}:${min}`;
+        }
+        document.getElementById('createModal').classList.remove('hidden');
+        document.getElementById('createTimeSlots').classList.add('hidden');
+    }
+
+    function openEditModal(event) {
+        const props = event.extendedProps;
+        document.getElementById('editId').value = event.id;
+        document.getElementById('editName').value = props.guest_name;
+        document.getElementById('editPhone').value = props.guest_phone;
+        document.getElementById('editTitle').value = props.procedure;
+        document.getElementById('editNotes').value = props.notes;
+        
+        const start = event.start;
+        if (start) {
+            let yyyy = start.getFullYear();
+            let mm = String(start.getMonth() + 1).padStart(2, '0');
+            let dd = String(start.getDate()).padStart(2, '0');
+            let hh = String(start.getHours()).padStart(2, '0');
+            let min = String(start.getMinutes()).padStart(2, '0');
+
+            document.getElementById('editDate').value = `${yyyy}-${mm}-${dd}`;
+            document.getElementById('editTime').value = `${hh}:${min}`;
+        }
+
+        const patientBtn = document.getElementById('patientCardBtn');
+        if (props.user_id) {
+            patientBtn.onclick = () => window.location.href = `/admin/patient/${props.user_id}`;
+            patientBtn.classList.remove('hidden');
+        } else {
+            patientBtn.classList.add('hidden');
+        }
+        
+        document.getElementById('editModal').classList.remove('hidden');
+        document.getElementById('editTimeSlots').classList.add('hidden');
+    }
+
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+    function showTimeSlots(prefix) {
+        const container = document.getElementById(prefix + 'TimeSlots');
+        const input = document.getElementById(prefix + 'Time');
+        if (!container.classList.contains('hidden')) { container.classList.add('hidden'); return; }
+        container.classList.remove('hidden');
+        container.innerHTML = '';
+        const startHour = 9; const endHour = 18;
+        for (let h = startHour; h <= endHour; h++) {
+            ['00', '30'].forEach(m => {
+                if(h === endHour && m === '30') return;
+                const timeStr = `${String(h).padStart(2, '0')}:${m}`;
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'text-sm py-2 px-1 rounded-md hover:bg-indigo-600 hover:text-white bg-white border border-gray-200 text-gray-700 transition font-medium text-center';
+                btn.innerText = timeStr;
+                btn.onclick = () => { input.value = timeStr; container.classList.add('hidden'); };
+                container.appendChild(btn);
+            });
+        }
+    }
+
+    async function deleteAppointment() {
+        if(!confirm("Emin misiniz?")) return;
+        const id = document.getElementById('editId').value;
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        try {
+            const res = await fetch(`/api/appointments/${id}/delete`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrfToken }
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                closeModal('editModal');
+                calendar.refetchEvents(); // Sayfa yenilemeden sil
+            } else {
+                alert('Hata: ' + data.message);
+            }
+        } catch (err) { console.error(err); alert('Hata!'); }
+    }
+</script>
+{% endblock %}

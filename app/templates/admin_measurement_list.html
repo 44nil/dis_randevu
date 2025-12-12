@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="space-y-3">
+  {% if measurements %}
+  <table class="w-full text-sm text-left">
+    <thead class="text-xs text-stone-500 uppercase bg-stone-100/50">
+      <tr>
+        <th class="px-3 py-2 rounded-l-lg">Tarih</th>
+        <th class="px-3 py-2">Kilo</th>
+        <th class="px-3 py-2">Bel</th>
+        <th class="px-3 py-2">Kalça</th>
+        <th class="px-3 py-2">Göğüs</th>
+        <th class="px-3 py-2 rounded-r-lg text-right">İşlem</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for m in measurements %}
+      <tr class="border-b border-stone-100 last:border-0 hover:bg-stone-50/50 transition">
+        <td class="px-3 py-2 font-medium text-stone-700">{{ m.date.strftime('%d.%m.%Y') }}</td>
+        <td class="px-3 py-2">{{ m.weight }} kg</td>
+        <td class="px-3 py-2">{{ m.waist or '-' }}</td>
+        <td class="px-3 py-2">{{ m.hip or '-' }}</td>
+        <td class="px-3 py-2">{{ m.chest or '-' }}</td>
+        <td class="px-3 py-2 text-right">
+          <form action="{{ url_for('admin.delete_measurement', measurement_id=m.id) }}" method="POST" class="deleteMeasurementForm inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="text-rose-400 hover:text-rose-600 text-xs">Sil</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <p class="text-stone-500 text-sm">Henüz ölçüm yok.</p>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+
+{% block title %}Tüm Randevular · Diş Kliniği{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+    <div class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+        <h2 class="text-xl font-bold text-gray-800">Randevu Listesi</h2>
+        <div class="text-sm text-gray-500">
+            Toplam <strong>{{ appointments|length }}</strong> kayıt bulundu
+        </div>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider border-b border-gray-100">
+                    <th class="px-6 py-3 font-medium">Tarih / Saat</th>
+                    <th class="px-6 py-3 font-medium">Hasta Adı</th>
+                    <th class="px-6 py-3 font-medium">İşlem</th>
+                    <th class="px-6 py-3 font-medium">İletişim</th>
+                    <th class="px-6 py-3 font-medium">Notlar</th>
+                    <th class="px-6 py-3 font-medium">Durum</th>
+                    <th class="px-6 py-3 font-medium text-right">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for appt in appointments %}
+                <tr class="hover:bg-indigo-50/30 transition duration-150 group">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-bold text-gray-800">
+                            {{ appt.start_time.strftime('%d.%m.%Y') }}
+                        </div>
+                        <div class="text-xs text-gray-500">
+                            {{ appt.start_time.strftime('%H:%M') }} - {{ appt.end_time.strftime('%H:%M') }}
+                        </div>
+                    </td>
+
+                    <td class="px-6 py-4">
+                        {% if appt.guest_name %}
+                            <span class="font-medium text-gray-900">{{ appt.guest_name }}</span>
+                        {% elif appt.patient %}
+                            <span class="font-medium text-indigo-700">{{ appt.patient.full_name }}</span>
+                        {% else %}
+                            <span class="text-gray-400 italic">İsimsiz</span>
+                        {% endif %}
+                    </td>
+
+                    <td class="px-6 py-4">
+                        <span class="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700 border border-blue-200">
+                            {{ appt.title }}
+                        </span>
+                    </td>
+
+                    <td class="px-6 py-4 text-sm text-gray-600">
+                        {% if appt.guest_phone %}
+                            <a href="tel:{{ appt.guest_phone }}" class="hover:text-indigo-600 flex items-center gap-1">
+                                <i class="fa-solid fa-phone text-xs"></i> {{ appt.guest_phone }}
+                            </a>
+                        {% elif appt.patient and appt.patient.phone %}
+                            {{ appt.patient.phone }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+
+                    <td class="px-6 py-4 text-sm text-gray-500 max-w-xs truncate" title="{{ appt.notes }}">
+                        {{ appt.notes or '-' }}
+                    </td>
+
+                    <td class="px-6 py-4">
+                        {% if appt.status == 'confirmed' %}
+                            <span class="text-green-600 font-medium text-xs flex items-center gap-1">
+                                <i class="fa-solid fa-circle text-[8px]"></i> Onaylı
+                            </span>
+                        {% elif appt.status == 'cancelled' %}
+                            <span class="text-red-500 font-medium text-xs flex items-center gap-1">
+                                <i class="fa-solid fa-xmark"></i> İptal
+                            </span>
+                        {% else %}
+                            <span class="text-gray-500 text-xs">{{ appt.status }}</span>
+                        {% endif %}
+                    </td>
+
+                    <td class="px-6 py-4 text-right">
+                        <button onclick="deleteFromList(this, {{ appt.id }})" 
+                                class="text-gray-400 hover:text-red-600 transition p-2 rounded-full hover:bg-red-50"
+                                title="Randevuyu Sil">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="px-6 py-12 text-center text-gray-400">
+                        <i class="fa-regular fa-calendar-xmark text-4xl mb-3 block opacity-20"></i>
+                        Henüz hiç randevu kaydı yok.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Fonksiyon artık 2 parametre alıyor: btn ve id
+    // Böylece HTML'den gelen sırayla eşleşiyor.
+    async function deleteFromList(btn, id) {
+        
+        // ID kontrolü (Hata önleyici)
+        if (!id || isNaN(id)) {
+            alert("Hata: Geçersiz ID!");
+            console.error("Gelen ID:", id);
+            return;
+        }
+
+        if(!confirm("Bu randevuyu silmek istediğinize emin misiniz?")) return;
+
+        // CSRF Token (Güvenlik)
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+        try {
+            const response = await fetch(`/api/appointments/${id}/delete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                }
+            });
+            
+            const result = await response.json();
+            
+            if(result.status === 'success') {
+                // Görsel silme (Sayfayı yenilemeden satırı kaldırır)
+                const row = btn.closest('tr');
+                if (row) {
+                    row.style.transition = "all 0.5s";
+                    row.style.opacity = "0";
+                    setTimeout(() => row.remove(), 500);
+                }
+            } else {
+                alert('Hata: ' + result.message);
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Sunucuyla iletişim hatası!');
+        }
+    }
+</script>
+{% endblock %}
