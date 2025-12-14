@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 user_bp = Blueprint('user', __name__)
 
-# İşlem Süreleri (Admin ile tutarlı olması için)
+# İşlem Süreleri
 PROCEDURE_DURATIONS = {
     'Muayene': 30,
     'Diş Taşı Temizliği': 30,
@@ -31,10 +31,13 @@ def dashboard():
     # Sadece hastanın KENDİ randevularını getir
     my_appointments = Appointment.query.filter_by(user_id=current_user.id)\
         .order_by(Appointment.start_time.desc()).all()
-        
-    return render_template('user_dashboard.html', 
+    
+    # DÜZELTME: Dosya ismi 'user_dashboard_new.html' olarak güncellendi
+    # VEKLEME: Template içinde kullanılan 'today' değişkeni eklendi
+    return render_template('user_dashboard_new.html', 
                          user=current_user, 
-                         appointments=my_appointments)
+                         appointments=my_appointments,
+                         today=datetime.now()) 
 
 # --- TAKVİM VERİSİ (GİZLİLİK FİLTRELİ) ---
 @user_bp.route('/api/user/calendar')

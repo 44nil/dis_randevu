@@ -21,6 +21,16 @@
   window.addEventListener("load", async function () {
     await Clerk.load();
 
+    // --- EKLENEN KISIM BAŞLANGIÇ ---
+    // Eğer URL'den veya Flask'tan çıkış komutu geldiyse Clerk'ten de çıkış yap
+    const forceSignout = "{{ force_signout }}";
+    
+    if (forceSignout === "true") {
+        console.log("Zorla çıkış yapılıyor...");
+        await Clerk.signOut();
+    }
+    // --- EKLENEN KISIM BİTİŞ ---
+
     if (Clerk.user) {
         // Zaten giriş yapmışsa Dashboard'a yönlendir
         window.location.href = "/auth/check-clerk";
@@ -29,7 +39,6 @@
         const signInDiv = document.getElementById("sign-in");
         
         Clerk.mountSignIn(signInDiv, {
-            // Giriş başarılı olunca bu adrese git
             afterSignInUrl: "/auth/check-clerk",
             afterSignUpUrl: "/auth/check-clerk",
             appearance: {

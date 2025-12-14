@@ -1,91 +1,260 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html class="light" lang="tr">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Yönetim Paneli · Diş Kliniği</title>
+    
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1a2632",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-[#0d141b] dark:text-slate-50 font-display transition-colors duration-200 overflow-hidden">
+<div class="flex h-screen w-full">
 
-{% block title %}Hekim Paneli · Diş Kliniği{% endblock %}
-
-{% block content %}
-<div class="space-y-6">
-    <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold text-gray-800">Hoş Geldiniz, Hocam 👋</h1>
-        <div class="text-sm text-gray-500">
-            Bugün: <span class="font-medium text-gray-700">{{ now.strftime('%d.%m.%Y') if now else '' }}</span>
-        </div>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <div class="flex items-center gap-4">
-                <div class="p-3 bg-blue-50 text-blue-600 rounded-xl">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+    <aside class="w-20 lg:w-64 bg-surface-light dark:bg-surface-dark border-r border-[#e7edf3] dark:border-[#2a3844] flex flex-col justify-between transition-all duration-300 z-20 hidden md:flex">
+        <div>
+            <div class="h-16 flex items-center justify-center lg:justify-start px-0 lg:px-6 border-b border-[#e7edf3] dark:border-[#2a3844]">
+                <div class="size-8 text-primary shrink-0">
+                    <span class="material-symbols-outlined text-3xl">dentistry</span>
                 </div>
-                <div>
-                    <div class="text-gray-500 text-sm">Bugünkü Randevular</div>
-                    <div class="text-2xl font-bold text-gray-800">{{ appointments|length }}</div>
-                </div>
+                <span class="ml-3 font-bold text-lg hidden lg:block tracking-tight">Yılmaz Klinik</span>
             </div>
-        </div>
-
-        <a href="{{ url_for('admin.calendar_view') }}" class="group bg-gradient-to-br from-indigo-500 to-purple-600 p-6 rounded-2xl shadow-md hover:shadow-lg transition-all transform hover:-translate-y-1">
-            <div class="flex items-center justify-between text-white">
-                <div>
-                    <div class="text-indigo-100 text-sm">Takvimi Yönet</div>
-                    <div class="text-xl font-bold">Randevu Takvimi &rarr;</div>
-                </div>
-                <div class="p-2 bg-white/20 rounded-lg group-hover:bg-white/30 transition">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                </div>
-            </div>
-        </a>
-    </div>
-
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-50 flex justify-between items-center">
-            <h3 class="font-semibold text-gray-800">Bugünün Programı</h3>
+            
+            <nav class="flex flex-col gap-2 p-4">
+                <a class="flex items-center gap-3 px-3 py-3 rounded-lg bg-primary/10 text-primary font-medium group" href="{{ url_for('admin.dashboard') }}">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span class="hidden lg:block">Kontrol Paneli</span>
+                </a>
+                <a class="flex items-center gap-3 px-3 py-3 rounded-lg text-[#4c739a] dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-[#0d141b] dark:hover:text-slate-200 font-medium transition-colors" href="{{ url_for('admin.calendar_view') }}">
+                    <span class="material-symbols-outlined">calendar_month</span>
+                    <span class="hidden lg:block">Randevu Takvimi</span>
+                </a>
+                <a class="flex items-center gap-3 px-3 py-3 rounded-lg text-[#4c739a] dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-[#0d141b] dark:hover:text-slate-200 font-medium transition-colors" href="{{ url_for('admin.appointment_list') }}">
+                    <span class="material-symbols-outlined">list_alt</span>
+                    <span class="hidden lg:block">Randevu Listesi</span>
+                </a>
+            </nav>
         </div>
         
-        <div class="p-0">
-            {% if appointments %}
-            <table class="w-full text-left">
-                <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
-                    <tr>
-                        <th class="px-6 py-3">Saat</th>
-                        <th class="px-6 py-3">Hasta</th>
-                        <th class="px-6 py-3">İşlem</th>
-                        <th class="px-6 py-3">Durum</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100">
-                    {% for appt in appointments %}
-                    <tr class="hover:bg-gray-50 transition">
-                        <td class="px-6 py-4 font-medium text-gray-900">
-                            {{ appt.start_time.strftime('%H:%M') }}
-                        </td>
-                        <td class="px-6 py-4">
-                            {% if appt.guest_name %}
-                                <span class="text-orange-600 font-medium">{{ appt.guest_name }}</span> 
-                                <span class="text-xs text-gray-400">(Misafir)</span>
-                            {% else %}
-                                {{ appt.patient.full_name }}
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-4 text-gray-600">{{ appt.title }}</td>
-                        <td class="px-6 py-4">
-                            <span class="px-2 py-1 text-xs rounded-full 
-                                {% if appt.status == 'confirmed' %}bg-green-100 text-green-700
-                                {% elif appt.status == 'cancelled' %}bg-red-100 text-red-700
-                                {% else %}bg-gray-100 text-gray-700{% endif %}">
-                                {{ appt.status }}
-                            </span>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-            <div class="p-8 text-center text-gray-400">
-                <p>Bugün için henüz kayıtlı randevu yok.</p>
-            </div>
-            {% endif %}
+        <div class="p-4 border-t border-[#e7edf3] dark:border-[#2a3844]">
+            <a class="flex items-center gap-3 px-3 py-3 rounded-lg text-[#4c739a] dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 font-medium transition-colors" href="{{ url_for('auth.logout') }}">
+                <span class="material-symbols-outlined">logout</span>
+                <span class="hidden lg:block">Çıkış Yap</span>
+            </a>
         </div>
-    </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+        
+        <header class="h-16 bg-surface-light dark:bg-surface-dark border-b border-[#e7edf3] dark:border-[#2a3844] flex items-center justify-between px-6 lg:px-10 shrink-0 z-10">
+            <div class="flex items-center gap-4">
+                <h2 class="text-lg font-bold leading-tight tracking-[-0.015em] hidden sm:block">Kontrol Paneli</h2>
+            </div>
+            <div class="flex items-center gap-6">
+                <div class="flex items-center gap-3 pl-6 border-l border-[#e7edf3] dark:border-[#2a3844]">
+                    <div class="text-right hidden sm:block">
+                        <p class="text-sm font-bold leading-none">{{ current_user.full_name }}</p>
+                        <p class="text-xs text-[#4c739a] dark:text-slate-400 mt-1">Yönetici</p>
+                    </div>
+                    <div class="size-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-lg border-2 border-white shadow-sm">
+                        {{ current_user.full_name[0] | upper }}
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-4 lg:p-10">
+            <div class="max-w-[1200px] mx-auto flex flex-col gap-8">
+                
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                    <div>
+                        <h1 class="text-2xl sm:text-3xl font-bold text-[#0d141b] dark:text-white tracking-tight">Günaydın, Hocam 👋</h1>
+                        <p class="text-[#4c739a] dark:text-slate-400 mt-2 text-base font-medium">İşte bugünkü programınızın özeti.</p>
+                    </div>
+                    <div class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-surface-dark rounded-lg shadow-sm border border-[#e7edf3] dark:border-[#2a3844]">
+                        <span class="material-symbols-outlined text-primary">calendar_today</span>
+                        <span class="text-sm font-bold text-[#0d141b] dark:text-white">{{ today.strftime('%d.%m.%Y') }}</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+                    <div class="bg-surface-light dark:bg-surface-dark p-6 rounded-xl border border-[#e7edf3] dark:border-[#2a3844] shadow-sm flex flex-col gap-4 group hover:border-primary/30 transition-all">
+                        <div class="flex items-center justify-between">
+                            <div class="size-10 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-primary">
+                                <span class="material-symbols-outlined">dentistry</span>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-3xl font-bold text-[#0d141b] dark:text-white mb-1">{{ appointments|length }}</p>
+                            <p class="text-sm font-medium text-[#4c739a] dark:text-slate-400">Bugünkü Randevular</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-surface-light dark:bg-surface-dark p-6 rounded-xl border border-[#e7edf3] dark:border-[#2a3844] shadow-sm flex flex-col gap-4 group hover:border-green-400/30 transition-all">
+                        <div class="flex items-center justify-between">
+                            <div class="size-10 rounded-lg bg-green-50 dark:bg-green-900/20 flex items-center justify-center text-green-600">
+                                <span class="material-symbols-outlined">payments</span>
+                            </div>
+                            <span class="px-2 py-1 rounded text-xs font-bold bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400">Bu Ay</span>
+                        </div>
+                        <div>
+                            <p class="text-3xl font-bold text-[#0d141b] dark:text-white mb-1">{{ monthly_income }} ₺</p>
+                            <p class="text-sm font-medium text-[#4c739a] dark:text-slate-400">Tahmini Ciro</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-surface-light dark:bg-surface-dark p-6 rounded-xl border border-[#e7edf3] dark:border-[#2a3844] shadow-sm flex flex-col gap-4 group hover:border-purple-400/30 transition-all">
+                        <div class="flex items-center justify-between">
+                            <div class="size-10 rounded-lg bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center text-purple-500">
+                                <span class="material-symbols-outlined">groups</span>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-3xl font-bold text-[#0d141b] dark:text-white mb-1">{{ total_patients }}</p>
+                            <p class="text-sm font-medium text-[#4c739a] dark:text-slate-400">Toplam Kayıtlı Hasta</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+                    
+                    <div class="lg:col-span-2 flex flex-col gap-6">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-xl font-bold text-[#0d141b] dark:text-white">Bugünün Programı</h3>
+                            <a href="{{ url_for('admin.appointment_list') }}" class="text-sm font-bold text-primary hover:text-blue-700 transition-colors">Tümünü Gör</a>
+                        </div>
+                        
+                        <div class="bg-surface-light dark:bg-surface-dark rounded-xl border border-[#e7edf3] dark:border-[#2a3844] overflow-hidden shadow-sm">
+                            <div class="grid grid-cols-12 gap-4 px-6 py-3 bg-background-light dark:bg-[#151f28] border-b border-[#e7edf3] dark:border-[#2a3844] text-xs font-bold uppercase tracking-wider text-[#4c739a] dark:text-slate-400">
+                                <div class="col-span-2">Saat</div>
+                                <div class="col-span-5">Hasta</div>
+                                <div class="col-span-3">İşlem</div>
+                                <div class="col-span-2 text-right">Durum</div>
+                            </div>
+
+                            {% for appt in appointments %}
+                            <div class="grid grid-cols-12 gap-4 px-6 py-5 border-b border-[#e7edf3] dark:border-[#2a3844] items-center hover:bg-slate-50 transition-colors">
+                                <div class="col-span-2 font-bold text-primary text-lg">{{ appt.start_time.strftime('%H:%M') }}</div>
+                                <div class="col-span-5 flex items-center gap-3">
+                                    <div class="size-10 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden shrink-0 text-slate-500 font-bold">
+                                        {% if appt.guest_name %}
+                                            {{ appt.guest_name[0] }}
+                                        {% elif appt.patient %}
+                                            {{ appt.patient.full_name[0] }}
+                                        {% else %}
+                                            ?
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <span class="font-bold text-[#0d141b] dark:text-white">
+                                            {{ appt.guest_name or appt.patient.full_name }}
+                                        </span>
+                                        {% if appt.guest_name %}
+                                            <span class="text-xs text-orange-500 font-medium">Misafir Kaydı</span>
+                                        {% else %}
+                                            <span class="text-xs text-[#4c739a]">Kayıtlı Hasta</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-span-3 text-sm font-bold text-[#0d141b] dark:text-white">{{ appt.title }}</div>
+                                <div class="col-span-2 text-right">
+                                    {% if appt.status == 'confirmed' %}
+                                        <span class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-bold bg-green-100 text-green-700">
+                                            <span class="material-symbols-outlined text-[14px]">check_circle</span> Onaylı
+                                        </span>
+                                    {% else %}
+                                        <span class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-bold bg-gray-100 text-gray-700">
+                                            {{ appt.status }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="p-8 text-center text-gray-400">
+                                <span class="material-symbols-outlined text-4xl mb-2">event_busy</span>
+                                <p>Bugün için henüz randevu yok.</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-6">
+                        {% if appointments %}
+                        {% set next_appt = appointments[0] %}
+                        <div class="w-full">
+                            <h3 class="text-xl font-bold text-[#0d141b] dark:text-white mb-4">Sıradaki Hasta</h3>
+                            <div class="bg-gradient-to-br from-primary to-blue-700 flex flex-col items-stretch justify-end rounded-xl shadow-md h-48 overflow-hidden relative group p-6">
+                                <div class="relative z-10 flex flex-col justify-between h-full">
+                                    <div class="flex justify-between items-start">
+                                        <span class="px-3 py-1 rounded-full text-xs font-bold bg-white/20 text-white backdrop-blur-sm">
+                                            {{ next_appt.start_time.strftime('%H:%M') }}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <p class="text-white tracking-tight text-2xl font-bold leading-tight">
+                                            {{ next_appt.guest_name or next_appt.patient.full_name }}
+                                        </p>
+                                        <p class="text-white/80 text-sm font-medium mt-1">
+                                            {{ next_appt.title }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="flex-1 bg-surface-light dark:bg-surface-dark rounded-xl border border-[#e7edf3] dark:border-[#2a3844] shadow-sm p-5">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-base font-bold text-[#0d141b] dark:text-white">Son Bildirimler</h3>
+                            </div>
+                            <div class="flex flex-col gap-4">
+                                <div class="flex gap-3 items-start">
+                                    <div class="size-8 rounded-full bg-blue-50 text-primary flex items-center justify-center shrink-0 mt-0.5">
+                                        <span class="material-symbols-outlined text-sm">info</span>
+                                    </div>
+                                    <div class="flex flex-col gap-1">
+                                        <p class="text-sm font-medium text-[#0d141b]">Sistem güncellemeleri tamamlandı.</p>
+                                        <span class="text-xs text-[#4c739a]">Şimdi</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </main>
 </div>
-{% endblock %}
+</body>
+</html>
