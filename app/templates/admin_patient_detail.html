@@ -1,112 +1,367 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html class="light" lang="tr">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Hasta Yönetimi · {{ patient.full_name }}</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "primary-content": "#ffffff",
+                        "primary-light": "#e8f3fe",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface": "#ffffff",
+                        "text-main": "#0d141b",
+                        "text-secondary": "#4c739a",
+                        "border-color": "#e7edf3",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .modal-animate { animation: fadeIn 0.2s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    </style>
+</head>
+<body class="bg-background-light text-text-main font-display h-screen flex overflow-hidden selection:bg-primary selection:text-white">
 
-{% block title %}Hasta Kartı · {{ patient.full_name }}{% endblock %}
-
-{% block content %}
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-    
-    <div class="md:col-span-1 space-y-6">
-        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 text-center">
-            <div class="w-20 h-20 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-3xl font-bold mx-auto mb-4">
-                {{ patient.full_name[0] }}
+<aside class="w-20 lg:w-64 bg-surface border-r border-border-color flex flex-col justify-between h-full shrink-0 transition-all duration-300 z-20">
+    <div class="flex flex-col h-full">
+        <div class="p-6 flex items-center gap-3 border-b border-border-color/50">
+            <div class="bg-primary/10 text-primary rounded-xl size-10 flex items-center justify-center font-bold text-lg">
+                {{ current_user.full_name[0] | upper }}
             </div>
-            <h2 class="text-xl font-bold text-gray-800">{{ patient.full_name }}</h2>
-            <p class="text-gray-500">{{ patient.phone }}</p>
-            <div class="mt-4 pt-4 border-t border-gray-50 text-left text-sm space-y-2">
-                <div class="flex justify-between">
-                    <span class="text-gray-500">Kayıt Tarihi:</span>
-                    <span class="font-medium">{{ patient.created_at.strftime('%d.%m.%Y') }}</span>
+            <div class="hidden lg:flex flex-col overflow-hidden">
+                <h1 class="text-text-main text-sm font-bold leading-tight truncate">{{ current_user.full_name }}</h1>
+                <p class="text-text-secondary text-xs font-medium truncate">Yönetici Paneli</p>
+            </div>
+        </div>
+        
+        <nav class="flex-1 overflow-y-auto py-6 flex flex-col gap-2 px-3">
+            <a class="flex items-center gap-3 px-3 py-3 rounded-xl text-text-secondary hover:bg-background-light hover:text-primary transition-colors group" href="{{ url_for('admin.dashboard') }}">
+                <span class="material-symbols-outlined text-[22px]">dashboard</span>
+                <span class="hidden lg:block text-sm font-medium">Panel</span>
+            </a>
+            <a class="flex items-center gap-3 px-3 py-3 rounded-xl text-text-secondary hover:bg-background-light hover:text-primary transition-colors group" href="{{ url_for('admin.calendar_view') }}">
+                <span class="material-symbols-outlined text-[22px]">calendar_month</span>
+                <span class="hidden lg:block text-sm font-medium">Takvim</span>
+            </a>
+            <a class="flex items-center gap-3 px-3 py-3 rounded-xl bg-primary/10 text-primary group" href="{{ url_for('admin.patients_list') }}">
+                <span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">group</span>
+                <span class="hidden lg:block text-sm font-bold">Hastalar</span>
+            </a>
+            <a class="flex items-center gap-3 px-3 py-3 rounded-xl text-text-secondary hover:bg-background-light hover:text-primary transition-colors group" href="{{ url_for('admin.appointment_list') }}">
+                <span class="material-symbols-outlined text-[22px]">list_alt</span>
+                <span class="hidden lg:block text-sm font-medium">Randevular</span>
+            </a>
+            <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors group" href="{{ url_for('admin.settings') }}">
+                <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">settings</span>
+                <span class="hidden lg:block text-sm font-medium">Ayarlar</span>
+            </a>
+            
+            <div class="mt-auto">
+                <a class="flex items-center gap-3 px-3 py-3 rounded-xl text-red-500 hover:bg-red-50 transition-colors group" href="{{ url_for('auth.logout') }}">
+                    <span class="material-symbols-outlined text-[22px]">logout</span>
+                    <span class="hidden lg:block text-sm font-medium">Çıkış</span>
+                </a>
+            </div>
+        </nav>
+    </div>
+</aside>
+
+<main class="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+    
+    <header class="bg-surface border-b border-border-color px-6 py-4 flex flex-wrap items-center justify-between gap-4 shrink-0 z-10">
+        <div>
+            <h2 class="text-2xl font-black text-text-main tracking-tight">Hasta Yönetimi</h2>
+            <p class="text-text-secondary text-sm">Hasta Detayları ve Tedavi Geçmişi</p>
+        </div>
+        <div class="flex gap-3">
+            <a href="{{ url_for('admin.patients_list') }}" class="flex items-center gap-2 bg-white border border-border-color text-text-secondary hover:text-text-main px-4 py-2.5 rounded-lg transition-colors">
+                <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+                <span class="text-sm font-bold">Listeye Dön</span>
+            </a>
+            <button onclick="openTreatmentModal()" class="flex items-center gap-2 bg-primary hover:bg-blue-600 text-white px-5 py-2.5 rounded-lg shadow-sm shadow-blue-200 transition-all active:scale-95">
+                <span class="material-symbols-outlined text-[20px]">add</span>
+                <span class="text-sm font-bold">Yeni Tedavi Ekle</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden">
+        
+        <div class="hidden md:flex w-[320px] bg-surface border-r border-border-color flex-col shrink-0 z-0">
+            <div class="p-4 border-b border-border-color/50">
+                <div class="relative group">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary group-focus-within:text-primary transition-colors">search</span>
+                    <input class="w-full pl-10 pr-4 py-3 bg-background-light border-transparent rounded-xl text-sm focus:bg-white focus:border-primary focus:ring-4 focus:ring-blue-50 transition-all placeholder:text-gray-400 outline-none" placeholder="Hasta ara..." type="text"/>
                 </div>
-                <div class="flex justify-between">
-                    <span class="text-gray-500">Toplam Tedavi:</span>
-                    <span class="font-medium">{{ treatments|length }}</span>
-                </div>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto">
+                {% for p in all_patients %}
+                <a href="{{ url_for('admin.patient_detail', user_id=p.id) }}" class="block px-4 py-3 border-l-4 border-b border-border-color/50 cursor-pointer transition-colors flex items-center justify-between group {% if p.id == patient.id %}border-l-primary bg-blue-50/30{% else %}border-l-transparent hover:bg-background-light{% endif %}">
+                    <div class="flex gap-3 items-center">
+                        <div class="size-10 rounded-full {% if p.id == patient.id %}bg-blue-100 text-primary{% else %}bg-gray-100 text-gray-500{% endif %} flex items-center justify-center text-sm font-bold">
+                            {{ p.full_name[0] | upper }}
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-bold text-text-main">{{ p.full_name }}</h4>
+                            <p class="text-xs text-text-secondary">{{ p.phone }}</p>
+                        </div>
+                    </div>
+                    {% if p.id == patient.id %}
+                    <div class="flex flex-col items-end gap-1">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-primary bg-primary/10 px-1.5 py-0.5 rounded">Seçili</span>
+                    </div>
+                    {% endif %}
+                </a>
+                {% else %}
+                <div class="p-4 text-center text-gray-400 text-sm">Kayıtlı hasta yok.</div>
+                {% endfor %}
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-            <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <i class="fa-solid fa-file-medical text-indigo-500"></i> Yeni Tedavi Ekle
-            </h3>
-            <form action="{{ url_for('admin.add_treatment', user_id=patient.id) }}" method="POST" class="space-y-3">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="flex-1 bg-background-light overflow-y-auto p-4 lg:p-8">
+            <div class="max-w-5xl mx-auto flex flex-col gap-6">
                 
-                <div>
-                    <label class="text-xs font-semibold text-gray-500">Yapılan İşlem</label>
-                    <input type="text" name="procedure_name" required class="w-full border rounded p-2 text-sm">
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="text-xs font-semibold text-gray-500">Diş No</label>
-                        <input type="text" name="tooth_number" placeholder="Örn: 46" class="w-full border rounded p-2 text-sm">
+                <div class="bg-surface rounded-2xl p-6 shadow-sm border border-border-color/60">
+                    <div class="flex flex-col md:flex-row justify-between md:items-start gap-6">
+                        <div class="flex gap-5">
+                            <div class="size-20 rounded-2xl bg-blue-100 text-primary flex items-center justify-center text-3xl font-black shadow-inner">
+                                {{ patient.full_name[0] | upper }}
+                            </div>
+                            <div class="flex flex-col gap-1">
+                                <div class="flex items-center gap-2">
+                                    <h3 class="text-2xl font-bold text-text-main">{{ patient.full_name }}</h3>
+                                    <span class="bg-blue-50 text-primary text-xs font-bold px-2 py-1 rounded-md">Hasta</span>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-4 text-sm text-text-secondary mt-1">
+                                    <div class="flex items-center gap-1">
+                                        <span class="material-symbols-outlined text-[18px]">call</span>
+                                        <span>{{ patient.phone }}</span>
+                                    </div>
+                                    <div class="flex items-center gap-1">
+                                        <span class="material-symbols-outlined text-[18px]">email</span>
+                                        <span>{{ patient.email or '-' }}</span>
+                                    </div>
+                                    <div class="flex items-center gap-1">
+                                        <span class="material-symbols-outlined text-[18px]">event</span>
+                                        <span>Kayıt: {{ patient.created_at.strftime('%d.%m.%Y') }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-2">
+                            <a href="tel:{{ patient.phone }}" class="size-10 flex items-center justify-center rounded-lg border border-border-color text-text-secondary hover:bg-background-light hover:text-primary transition-colors" title="Ara">
+                                <span class="material-symbols-outlined">call</span>
+                            </a>
+                            <button class="h-10 px-4 flex items-center justify-center gap-2 rounded-lg bg-text-main hover:bg-gray-800 text-white text-sm font-bold shadow-sm transition-colors">
+                                <span class="material-symbols-outlined text-[18px]">edit</span>
+                                Düzenle
+                            </button>
+                        </div>
                     </div>
-                    <div>
-                        <label class="text-xs font-semibold text-gray-500">Ücret (₺)</label>
-                        <input type="number" name="cost" class="w-full border rounded p-2 text-sm">
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 pt-6 border-t border-border-color/60">
+                        <div>
+                            <p class="text-xs font-medium text-text-secondary mb-1">Toplam Randevu</p>
+                            <p class="text-sm font-bold text-text-main">{{ appointments|length }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-text-secondary mb-1">Toplam Tedavi</p>
+                            <p class="text-sm font-bold text-primary">{{ treatments|length }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-text-secondary mb-1">Durum</p>
+                            <p class="text-sm font-bold text-green-600 flex items-center gap-1">
+                                <span class="size-2 rounded-full bg-green-500"></span>
+                                Aktif
+                            </p>
+                        </div>
                     </div>
                 </div>
-                <div>
-                    <label class="text-xs font-semibold text-gray-500">Notlar</label>
-                    <textarea name="notes" rows="2" class="w-full border rounded p-2 text-sm"></textarea>
+
+                <div class="flex gap-1 border-b border-border-color/60 overflow-x-auto no-scrollbar">
+                    <button class="px-6 py-3 text-sm font-bold text-primary border-b-2 border-primary bg-background-light/50 rounded-t-lg whitespace-nowrap">Tedavi Planı</button>
+                    <button class="px-6 py-3 text-sm font-medium text-text-secondary hover:text-text-main transition-colors whitespace-nowrap">Randevular</button>
+                    <button class="px-6 py-3 text-sm font-medium text-text-secondary hover:text-text-main transition-colors whitespace-nowrap">Dosyalar</button>
                 </div>
-                <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 font-medium">Kaydet</button>
-            </form>
+
+                <div class="bg-surface rounded-2xl border border-border-color/60 overflow-hidden shadow-sm">
+                    <div class="flex justify-between items-center p-4 border-b border-border-color/50 bg-gray-50/50">
+                        <h4 class="text-base font-bold text-text-main flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">dentistry</span>
+                            Tedavi Geçmişi
+                        </h4>
+                        <button onclick="openTreatmentModal()" class="text-xs font-bold text-primary hover:underline">+ İşlem Ekle</button>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-50/50 border-b border-border-color/50 text-xs uppercase tracking-wider text-text-secondary">
+                                    <th class="px-6 py-3 font-semibold">Tarih</th>
+                                    <th class="px-6 py-3 font-semibold">Diş No</th>
+                                    <th class="px-6 py-3 font-semibold">İşlem</th>
+                                    <th class="px-6 py-3 font-semibold text-right">Tutar</th>
+                                    <th class="px-6 py-3 font-semibold text-right">Durum</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-sm">
+                                {% for t in treatments %}
+                                <tr class="group hover:bg-background-light transition-colors">
+                                    <td class="px-6 py-4 text-text-main font-medium border-b border-border-color/50">
+                                        {{ t.date.strftime('%d.%m.%Y') }}
+                                    </td>
+                                    <td class="px-6 py-4 text-text-secondary border-b border-border-color/50">
+                                        <span class="bg-gray-100 px-2 py-1 rounded font-mono text-xs font-bold">{{ t.tooth_number or '-' }}</span>
+                                    </td>
+                                    <td class="px-6 py-4 text-text-main border-b border-border-color/50">
+                                        <div class="flex flex-col">
+                                            <span>{{ t.procedure_name }}</span>
+                                            <span class="text-xs text-text-secondary truncate max-w-[200px]">{{ t.notes or '' }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-right font-bold text-text-main border-b border-border-color/50">
+                                        {{ t.cost }} ₺
+                                    </td>
+                                    <td class="px-6 py-4 text-right border-b border-border-color/50">
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-green-50 text-green-600 border border-green-100">
+                                            <span class="material-symbols-outlined text-[14px]">check</span> Tamamlandı
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="5" class="p-8 text-center text-text-secondary italic">
+                                        Henüz tedavi kaydı bulunmuyor.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-surface rounded-2xl border border-border-color/60 p-5 shadow-sm">
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="text-sm font-bold text-text-main flex items-center gap-2">
+                                <span class="material-symbols-outlined text-orange-500">history</span>
+                                Son Randevular
+                            </h4>
+                        </div>
+                        <div class="space-y-3">
+                            {% for appt in appointments[:3] %}
+                            <div class="flex justify-between items-center p-2 rounded hover:bg-background-light">
+                                <div>
+                                    <p class="text-xs font-bold text-text-main">{{ appt.title }}</p>
+                                    <p class="text-[10px] text-text-secondary">{{ appt.start_time.strftime('%d.%m.%Y') }}</p>
+                                </div>
+                                <span class="text-[10px] font-bold px-2 py-1 rounded bg-gray-100 text-gray-600">{{ appt.status }}</span>
+                            </div>
+                            {% else %}
+                            <p class="text-sm text-gray-400">Kayıt yok.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="bg-surface rounded-2xl border border-border-color/60 p-5 shadow-sm">
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="text-sm font-bold text-text-main flex items-center gap-2">
+                                <span class="material-symbols-outlined text-purple-500">folder_open</span>
+                                Dosyalar
+                            </h4>
+                            <button class="text-xs text-primary font-bold">Yükle</button>
+                        </div>
+                        <div class="flex gap-3">
+                            <div class="flex flex-col items-center gap-1">
+                                <div class="size-16 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400">
+                                    <span class="material-symbols-outlined">image</span>
+                                </div>
+                                <span class="text-[10px] text-text-secondary">Röntgen.jpg</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </div>
     </div>
+</main>
 
-    <div class="md:col-span-2 space-y-6">
+<div id="treatmentModal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-50 transition-all backdrop-blur-sm p-4">
+    <div class="bg-surface rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden modal-animate">
+        <div class="bg-primary px-6 py-4 flex justify-between items-center text-white">
+            <h3 class="font-bold text-lg flex items-center gap-2">
+                <span class="material-symbols-outlined">clinical_notes</span> Yeni Tedavi Ekle
+            </h3>
+            <button onclick="closeTreatmentModal()" class="text-white/80 hover:text-white rounded-lg transition-colors">
+                <span class="material-symbols-outlined text-2xl">close</span>
+            </button>
+        </div>
         
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-50 bg-gray-50/50">
-                <h3 class="font-bold text-gray-800">Tedavi Geçmişi</h3>
+        <form action="{{ url_for('admin.add_treatment', user_id=patient.id) }}" method="POST" class="p-6 space-y-4">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div class="grid grid-cols-3 gap-3">
+                <div class="col-span-2">
+                    <label class="block text-xs font-bold text-text-secondary uppercase mb-1">İşlem Adı</label>
+                    <input type="text" name="procedure_name" required placeholder="Örn: Kanal Tedavisi" class="w-full bg-background-light border border-border-color rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/50 transition-all">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-text-secondary uppercase mb-1">Diş No</label>
+                    <input type="text" name="tooth_number" placeholder="46" class="w-full bg-background-light border border-border-color rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/50 transition-all">
+                </div>
             </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-gray-50 text-gray-500">
-                        <tr>
-                            <th class="px-6 py-3">Tarih</th>
-                            <th class="px-6 py-3">Diş</th>
-                            <th class="px-6 py-3">İşlem</th>
-                            <th class="px-6 py-3">Not</th>
-                            <th class="px-6 py-3 text-right">Tutar</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        {% for t in treatments %}
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-6 py-3 text-gray-600">{{ t.date.strftime('%d.%m.%Y') }}</td>
-                            <td class="px-6 py-3 font-bold text-indigo-600">{{ t.tooth_number or '-' }}</td>
-                            <td class="px-6 py-3 font-medium">{{ t.procedure_name }}</td>
-                            <td class="px-6 py-3 text-gray-500 text-xs max-w-xs truncate">{{ t.notes or '' }}</td>
-                            <td class="px-6 py-3 text-right font-medium">{{ t.cost }} ₺</td>
-                        </tr>
-                        {% else %}
-                        <tr><td colspan="5" class="px-6 py-8 text-center text-gray-400">Henüz tedavi kaydı yok.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-50 bg-gray-50/50">
-                <h3 class="font-bold text-gray-800">Randevu Geçmişi</h3>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-text-secondary uppercase mb-1">Ücret (₺)</label>
+                    <input type="number" name="cost" step="0.01" placeholder="0.00" class="w-full bg-background-light border border-border-color rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/50 transition-all">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-text-secondary uppercase mb-1">Alınan (₺)</label>
+                    <input type="number" name="payment_received" step="0.01" placeholder="0.00" class="w-full bg-background-light border border-border-color rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/50 transition-all">
+                </div>
             </div>
-            <ul class="divide-y divide-gray-100">
-                {% for appt in appointments %}
-                <li class="px-6 py-3 flex justify-between items-center hover:bg-gray-50">
-                    <div>
-                        <div class="font-medium text-gray-800">{{ appt.title }}</div>
-                        <div class="text-xs text-gray-500">{{ appt.start_time.strftime('%d.%m.%Y %H:%M') }}</div>
-                    </div>
-                    <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">{{ appt.status }}</span>
-                </li>
-                {% else %}
-                <li class="px-6 py-8 text-center text-gray-400">Randevu kaydı bulunamadı.</li>
-                {% endfor %}
-            </ul>
-        </div>
 
+            <div>
+                <label class="block text-xs font-bold text-text-secondary uppercase mb-1">Notlar</label>
+                <textarea name="notes" rows="3" class="w-full bg-background-light border border-border-color rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-primary/50 transition-all resize-none" placeholder="Tedavi detayları..."></textarea>
+            </div>
+
+            <div class="flex justify-end pt-2">
+                <button type="submit" class="w-full bg-primary hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-bold shadow-md transition-all flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">save</span> Kaydet
+                </button>
+            </div>
+        </form>
     </div>
 </div>
-{% endblock %}
+
+<script>
+    function openTreatmentModal() { document.getElementById('treatmentModal').classList.remove('hidden'); }
+    function closeTreatmentModal() { document.getElementById('treatmentModal').classList.add('hidden'); }
+</script>
+
+</body>
+</html>

@@ -59,9 +59,13 @@
                     <span class="material-symbols-outlined">calendar_month</span>
                     <span class="hidden lg:block">Randevu Takvimi</span>
                 </a>
-                <a class="flex items-center gap-3 px-3 py-3 rounded-lg text-[#4c739a] dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-[#0d141b] dark:hover:text-slate-200 font-medium transition-colors" href="{{ url_for('admin.appointment_list') }}">
-                    <span class="material-symbols-outlined">list_alt</span>
-                    <span class="hidden lg:block">Randevu Listesi</span>
+                <a class="flex items-center gap-3 px-3 py-3 rounded-lg text-[#4c739a] dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-[#0d141b] dark:hover:text-slate-200 font-medium transition-colors" href="{{ url_for('admin.patients_list') }}">
+                    <span class="material-symbols-outlined">group</span>
+                    <span class="hidden lg:block">Hastalar</span>
+                </a>
+                <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors group" href="{{ url_for('admin.settings') }}">
+                    <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">settings</span>
+                    <span class="hidden lg:block text-sm font-medium">Ayarlar</span>
                 </a>
             </nav>
         </div>
@@ -176,13 +180,16 @@
                                         {% endif %}
                                     </div>
                                     <div class="flex flex-col">
-                                        <span class="font-bold text-[#0d141b] dark:text-white">
-                                            {{ appt.guest_name or appt.patient.full_name }}
-                                        </span>
-                                        {% if appt.guest_name %}
-                                            <span class="text-xs text-orange-500 font-medium">Misafir Kaydı</span>
-                                        {% else %}
+                                        {% if appt.patient %}
+                                            <a href="{{ url_for('admin.patient_detail', user_id=appt.patient.id) }}" class="font-bold text-[#0d141b] dark:text-white hover:text-primary transition-colors underline-offset-2 hover:underline">
+                                                {{ appt.patient.full_name }}
+                                            </a>
                                             <span class="text-xs text-[#4c739a]">Kayıtlı Hasta</span>
+                                        {% else %}
+                                            <span class="font-bold text-[#0d141b] dark:text-white">
+                                                {{ appt.guest_name }}
+                                            </span>
+                                            <span class="text-xs text-orange-500 font-medium">Misafir Kaydı</span>
                                         {% endif %}
                                     </div>
                                 </div>
@@ -221,9 +228,15 @@
                                         </span>
                                     </div>
                                     <div>
-                                        <p class="text-white tracking-tight text-2xl font-bold leading-tight">
-                                            {{ next_appt.guest_name or next_appt.patient.full_name }}
-                                        </p>
+                                        {% if next_appt.patient %}
+                                            <a href="{{ url_for('admin.patient_detail', user_id=next_appt.patient.id) }}" class="text-white tracking-tight text-2xl font-bold leading-tight hover:underline">
+                                                {{ next_appt.patient.full_name }}
+                                            </a>
+                                        {% else %}
+                                            <p class="text-white tracking-tight text-2xl font-bold leading-tight">
+                                                {{ next_appt.guest_name }}
+                                            </p>
+                                        {% endif %}
                                         <p class="text-white/80 text-sm font-medium mt-1">
                                             {{ next_appt.title }}
                                         </p>

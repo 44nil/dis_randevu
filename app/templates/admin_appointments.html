@@ -1,153 +1,119 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html class="light" lang="tr">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Randevu Listesi · Yönetim Paneli</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = { darkMode: "class", theme: { extend: { colors: { "primary": "#137fec", "background-light": "#f6f7f8", "background-dark": "#101922", "surface-light": "#ffffff", "surface-dark": "#1e293b" }, fontFamily: { "display": ["Manrope", "sans-serif"] } } } }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-[#0d141b] dark:text-slate-50 font-display transition-colors duration-200 overflow-hidden h-screen flex">
 
-{% block title %}Tüm Randevular · Diş Kliniği{% endblock %}
-
-{% block content %}
-<div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-    <div class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-        <h2 class="text-xl font-bold text-gray-800">Randevu Listesi</h2>
-        <div class="text-sm text-gray-500">
-            Toplam <strong>{{ appointments|length }}</strong> kayıt bulundu
+<aside class="w-72 bg-surface-light dark:bg-surface-dark border-r border-slate-200 dark:border-slate-700 flex flex-col flex-shrink-0 h-full overflow-y-auto hidden md:flex">
+    <div class="p-6 pb-2">
+        <div class="flex items-center gap-3 mb-6">
+            <div class="bg-primary/10 flex items-center justify-center rounded-full size-12 font-bold text-primary text-xl">{{ current_user.full_name[0] | upper }}</div>
+            <div>
+                <h1 class="text-base font-bold">{{ current_user.full_name }}</h1>
+                <p class="text-xs text-slate-500">Yönetici Paneli</p>
+            </div>
         </div>
     </div>
+    <nav class="flex flex-col gap-1 px-4">
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors" href="{{ url_for('admin.dashboard') }}">
+            <span class="material-symbols-outlined">dashboard</span> Panel
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors" href="{{ url_for('admin.calendar_view') }}">
+            <span class="material-symbols-outlined">calendar_month</span> Takvim
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary font-bold" href="{{ url_for('admin.appointment_list') }}">
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">list_alt</span> Randevu Listesi
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors" href="{{ url_for('admin.patients_list') }}">
+            <span class="material-symbols-outlined">group</span> Hastalar
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors group" href="{{ url_for('admin.settings') }}">
+            <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">settings</span>
+            <span class="hidden lg:block text-sm font-medium">Ayarlar</span>
+        </a>
+        <div class="mt-8">
+            <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:text-red-600 transition-colors" href="{{ url_for('auth.logout') }}">
+                <span class="material-symbols-outlined">logout</span> Çıkış Yap
+            </a>
+        </div>
+    </nav>
+</aside>
 
-    <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-            <thead>
-                <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider border-b border-gray-100">
-                    <th class="px-6 py-3 font-medium">Tarih / Saat</th>
-                    <th class="px-6 py-3 font-medium">Hasta Adı</th>
-                    <th class="px-6 py-3 font-medium">İşlem</th>
-                    <th class="px-6 py-3 font-medium">İletişim</th>
-                    <th class="px-6 py-3 font-medium">Notlar</th>
-                    <th class="px-6 py-3 font-medium">Durum</th>
-                    <th class="px-6 py-3 font-medium text-right">İşlemler</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100">
-                {% for appt in appointments %}
-                <tr class="hover:bg-indigo-50/30 transition duration-150 group">
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm font-bold text-gray-800">
-                            {{ appt.start_time.strftime('%d.%m.%Y') }}
-                        </div>
-                        <div class="text-xs text-gray-500">
-                            {{ appt.start_time.strftime('%H:%M') }} - {{ appt.end_time.strftime('%H:%M') }}
-                        </div>
-                    </td>
+<main class="flex-1 flex flex-col h-full min-w-0">
+    <header class="h-16 flex items-center justify-between px-6 bg-surface-light dark:bg-surface-dark border-b border-slate-200 dark:border-slate-700 shrink-0">
+        <h2 class="text-lg font-bold">Tüm Randevular</h2>
+        <button class="relative p-2 text-slate-500 hover:bg-slate-100 rounded-lg"><span class="material-symbols-outlined">notifications</span></button>
+    </header>
 
-                    <td class="px-6 py-4">
-                        {% if appt.guest_name %}
-                            <span class="font-medium text-gray-900">{{ appt.guest_name }}</span>
-                        {% elif appt.patient %}
-                            <span class="font-medium text-indigo-700">{{ appt.patient.full_name }}</span>
-                        {% else %}
-                            <span class="text-gray-400 italic">İsimsiz</span>
-                        {% endif %}
-                    </td>
-
-                    <td class="px-6 py-4">
-                        <span class="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700 border border-blue-200">
-                            {{ appt.title }}
-                        </span>
-                    </td>
-
-                    <td class="px-6 py-4 text-sm text-gray-600">
-                        {% if appt.guest_phone %}
-                            <a href="tel:{{ appt.guest_phone }}" class="hover:text-indigo-600 flex items-center gap-1">
-                                <i class="fa-solid fa-phone text-xs"></i> {{ appt.guest_phone }}
+    <div class="flex-1 p-8 overflow-y-auto">
+        <div class="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+            <table class="w-full text-left">
+                <thead class="bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-500 uppercase border-b border-slate-200 dark:border-slate-700">
+                    <tr>
+                        <th class="p-4 pl-6">Tarih</th>
+                        <th class="p-4">Hasta</th>
+                        <th class="p-4">İşlem</th>
+                        <th class="p-4">Durum</th>
+                        <th class="p-4 pr-6 text-right">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody class="text-sm divide-y divide-slate-100 dark:divide-slate-700">
+                    {% for appt in appointments %}
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                        <td class="p-4 pl-6">
+                            <div class="font-bold">{{ appt.start_time.strftime('%d.%m.%Y') }}</div>
+                            <div class="text-xs text-slate-500">{{ appt.start_time.strftime('%H:%M') }} - {{ appt.end_time.strftime('%H:%M') }}</div>
+                        </td>
+                        <td class="p-4">
+                            {% if appt.patient %}
+                                <a href="{{ url_for('admin.patient_detail', user_id=appt.patient.id) }}" class="font-bold text-primary hover:underline">{{ appt.patient.full_name }}</a>
+                            {% else %}
+                                <span class="font-bold">{{ appt.guest_name }}</span> <span class="text-[10px] bg-orange-100 text-orange-700 px-1 rounded">Misafir</span>
+                            {% endif %}
+                        </td>
+                        <td class="p-4"><span class="px-2 py-1 bg-slate-100 rounded text-xs font-bold">{{ appt.title }}</span></td>
+                        <td class="p-4"><span class="text-xs font-bold {{ 'text-green-600' if appt.status=='confirmed' else 'text-slate-500' }}">{{ appt.status }}</span></td>
+                        <td class="p-4 pr-6 text-right flex justify-end gap-2">
+                            <a href="{{ url_for('admin.appointment_detail', appt_id=appt.id) }}" class="p-2 border border-slate-200 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-primary transition-colors" title="Detaylar">
+                                <span class="material-symbols-outlined text-[18px]">visibility</span>
                             </a>
-                        {% elif appt.patient and appt.patient.phone %}
-                            {{ appt.patient.phone }}
-                        {% else %}
-                            -
-                        {% endif %}
-                    </td>
-
-                    <td class="px-6 py-4 text-sm text-gray-500 max-w-xs truncate" title="{{ appt.notes }}">
-                        {{ appt.notes or '-' }}
-                    </td>
-
-                    <td class="px-6 py-4">
-                        {% if appt.status == 'confirmed' %}
-                            <span class="text-green-600 font-medium text-xs flex items-center gap-1">
-                                <i class="fa-solid fa-circle text-[8px]"></i> Onaylı
-                            </span>
-                        {% elif appt.status == 'cancelled' %}
-                            <span class="text-red-500 font-medium text-xs flex items-center gap-1">
-                                <i class="fa-solid fa-xmark"></i> İptal
-                            </span>
-                        {% else %}
-                            <span class="text-gray-500 text-xs">{{ appt.status }}</span>
-                        {% endif %}
-                    </td>
-
-                    <td class="px-6 py-4 text-right">
-                        <button onclick="deleteFromList(this, {{ appt.id }})" 
-                                class="text-gray-400 hover:text-red-600 transition p-2 rounded-full hover:bg-red-50"
-                                title="Randevuyu Sil">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="7" class="px-6 py-12 text-center text-gray-400">
-                        <i class="fa-regular fa-calendar-xmark text-4xl mb-3 block opacity-20"></i>
-                        Henüz hiç randevu kaydı yok.
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                            <button onclick="deleteFromList(this, '{{ appt.id }}')" class="p-2 border border-slate-200 rounded-lg text-slate-500 hover:bg-red-50 hover:text-red-600 transition-colors" title="Sil">
+                                <span class="material-symbols-outlined text-[18px]">delete</span>
+                            </button>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="5" class="p-8 text-center text-slate-400">Randevu bulunamadı.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
-</div>
-{% endblock %}
+</main>
 
-{% block scripts %}
 <script>
-    // Fonksiyon artık 2 parametre alıyor: btn ve id
-    // Böylece HTML'den gelen sırayla eşleşiyor.
     async function deleteFromList(btn, id) {
-        
-        // ID kontrolü (Hata önleyici)
-        if (!id || isNaN(id)) {
-            alert("Hata: Geçersiz ID!");
-            console.error("Gelen ID:", id);
-            return;
-        }
-
-        if(!confirm("Bu randevuyu silmek istediğinize emin misiniz?")) return;
-
-        // CSRF Token (Güvenlik)
+        if (!id || !confirm("Silmek istediğinize emin misiniz?")) return;
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-
         try {
-            const response = await fetch(`/api/appointments/${id}/delete`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
-                }
-            });
-            
-            const result = await response.json();
-            
-            if(result.status === 'success') {
-                // Görsel silme (Sayfayı yenilemeden satırı kaldırır)
-                const row = btn.closest('tr');
-                if (row) {
-                    row.style.transition = "all 0.5s";
-                    row.style.opacity = "0";
-                    setTimeout(() => row.remove(), 500);
-                }
-            } else {
-                alert('Hata: ' + result.message);
-            }
-        } catch (err) {
-            console.error(err);
-            alert('Sunucuyla iletişim hatası!');
-        }
+            const res = await fetch(`/api/appointments/${id}/delete`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken } });
+            const data = await res.json();
+            if(data.status === 'success') btn.closest('tr').remove();
+            else alert(data.message);
+        } catch(e) { alert('Hata oluştu.'); }
     }
 </script>
-{% endblock %}
+</body>
+</html>

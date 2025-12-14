@@ -1,321 +1,460 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html class="light" lang="tr">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Randevu Takvimi · Yönetim Paneli</title>
+    
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js'></script>
 
-{% block title %}Randevu Takvimi · Diş Kliniği{% endblock %}
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1e293b",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        /* --- TEMEL AYARLAR --- */
+        .fc { font-family: 'Manrope', sans-serif; }
+        .fc-header-toolbar { display: none !important; }
 
-{% block content %}
-<div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 h-[85vh] flex flex-col">
-    <div class="flex justify-between items-center mb-6">
-        <h2 class="text-2xl font-bold text-gray-800">Randevu Takvimi</h2>
-        <button onclick="openCreateModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-md flex items-center gap-2">
-            <i class="fa-solid fa-plus"></i> Yeni Randevu
-        </button>
-    </div>
-    <div id="calendar" class="flex-grow"></div>
-</div>
+        /* --- TABLO STİLİ --- */
+        .fc-theme-standard td, .fc-theme-standard th { border-color: #f1f5f9 !important; }
+        .dark .fc-theme-standard td, .dark .fc-theme-standard th { border-color: #334155 !important; }
 
-<div id="createModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 transition-opacity">
-    <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden transform transition-all max-h-[90vh] overflow-y-auto">
-        <div class="bg-indigo-600 px-6 py-4 flex justify-between items-center text-white">
-            <h3 class="font-bold text-lg">Yeni Randevu Oluştur</h3>
-            <button onclick="closeModal('createModal')" class="text-2xl hover:text-indigo-200">&times;</button>
+        /* Saat Dilimleri (Yükseklik: 4rem = 64px) */
+        .fc-timegrid-slot { height: 4rem !important; border-bottom: 1px dashed #e2e8f0 !important; }
+        .dark .fc-timegrid-slot { border-bottom-color: #334155 !important; }
+
+        /* Gün Başlıkları */
+        .fc-col-header-cell { background-color: #fff !important; padding: 16px 0 !important; border-bottom: 2px solid #e2e8f0 !important; }
+        .dark .fc-col-header-cell { background-color: #1e293b !important; border-bottom-color: #334155 !important; }
+        .fc-col-header-cell-cushion { color: #0f172a; font-weight: 800; font-size: 1rem; text-decoration: none !important; text-transform: uppercase; }
+        .dark .fc-col-header-cell-cushion { color: #fff; }
+
+        /* Randevu Kartları */
+        .fc-event {
+            border: none !important; border-radius: 6px !important; margin: 2px 4px !important; padding: 2px !important;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06) !important;
+            z-index: 20;
+        }
+
+        /* --- MANYETİK İMLEÇ (GHOST CURSOR) --- */
+        .ghost-event {
+            position: absolute;
+            pointer-events: none;
+            z-index: 10;
+            background-color: rgba(59, 130, 246, 0.15);
+            border: 2px dashed #3b82f6;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #2563eb;
+            font-weight: 700;
+            font-size: 0.85rem;
+            box-sizing: border-box;
+            transition: top 0.05s ease-out, left 0.05s ease-out;
+        }
+        
+        .ghost-event span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 4px 8px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .modal-animate { animation: fadeIn 0.2s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased overflow-hidden h-screen flex">
+
+<aside class="w-72 bg-surface-light dark:bg-surface-dark border-r border-slate-200 dark:border-slate-700 flex flex-col flex-shrink-0 h-full overflow-y-auto hidden md:flex">
+    <div class="p-6 pb-2">
+        <div class="flex items-center gap-3 mb-6">
+            <div class="relative">
+                <div class="bg-primary/10 flex items-center justify-center rounded-full size-12 shadow-sm border-2 border-primary/20 text-primary font-bold text-xl">
+                     {{ current_user.full_name[0] | upper }}
+                </div>
+                <div class="absolute bottom-0 right-0 size-3 bg-green-500 rounded-full border-2 border-white dark:border-slate-800"></div>
+            </div>
+            <div class="flex flex-col">
+                <h1 class="text-slate-900 dark:text-white text-base font-bold leading-tight">{{ current_user.full_name }}</h1>
+                <p class="text-slate-500 dark:text-slate-400 text-xs font-medium">Yönetici Paneli</p>
+            </div>
         </div>
-        <form id="createForm" class="p-6 space-y-5">
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Hasta Adı</label>
-                    <input type="text" name="guest_name" required class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition" placeholder="Ad Soyad">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Telefon</label>
-                    <input type="tel" name="guest_phone" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition" placeholder="05XX...">
-                </div>
-            </div>
-
-            <div>
-                <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Yapılacak İşlem</label>
-                <select name="title" class="w-full border border-gray-300 rounded-lg p-2.5 bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition">
-                    <option value="Muayene">Muayene (30 dk)</option> <option value="Diş Taşı Temizliği">Diş Taşı Temizliği (30 dk)</option>
-                    <option value="Diş Çekimi">Diş Çekimi (30 dk)</option>
-                    <option value="Dolgu">Dolgu (45 dk)</option>
-                    <option value="Kanal Tedavisi">Kanal Tedavisi (60 dk)</option>
-                    <option value="İmplant">İmplant (90 dk)</option>
-                </select>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Tarih</label>
-                    <input type="date" id="createDate" name="appt_date" required class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Saat</label>
-                    <div class="relative">
-                        <input type="time" id="createTime" name="appt_time" required 
-                               class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition cursor-pointer"
-                               onclick="showTimeSlots('create')"
-                               autocomplete="off">
-                        <div class="absolute right-3 top-3 text-gray-400 pointer-events-none">
-                            <i class="fa-regular fa-clock"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="createTimeSlots" class="hidden grid grid-cols-4 gap-2 bg-gray-50 p-3 rounded-lg border border-gray-200 animate-fade-in"></div>
-
-            <div>
-                <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Notlar</label>
-                <textarea name="notes" rows="2" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 outline-none transition text-sm"></textarea>
-            </div>
-
-            <div class="flex justify-end pt-2">
-                <button type="submit" class="bg-indigo-600 text-white px-6 py-2.5 rounded-lg hover:bg-indigo-700 font-medium shadow-md transition transform active:scale-95">Randevu Oluştur</button>
-            </div>
-        </form>
     </div>
-</div>
-
-<div id="editModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 transition-opacity">
-    <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden transform transition-all max-h-[90vh] overflow-y-auto">
-        <div class="bg-gray-800 px-6 py-4 flex justify-between items-center text-white">
-            <h3 class="font-bold text-lg">Randevu Detayı</h3>
-            <button onclick="closeModal('editModal')" class="text-2xl hover:text-gray-300">&times;</button>
+    
+    <nav class="flex flex-col gap-1 px-4">
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white transition-colors" href="{{ url_for('admin.dashboard') }}">
+            <span class="material-symbols-outlined text-[22px]">dashboard</span>
+            <span class="text-sm font-medium">Kontrol Paneli</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary font-bold group" href="{{ url_for('admin.calendar_view') }}">
+            <span class="material-symbols-outlined text-[22px]" style="font-variation-settings: 'FILL' 1;">calendar_month</span>
+            <span class="text-sm font-semibold">Takvim</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white transition-colors" href="{{ url_for('admin.patients_list') }}">
+            <span class="material-symbols-outlined text-[22px]">group</span>
+            <span class="text-sm font-medium">Hastalar</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white transition-colors" href="{{ url_for('admin.appointment_list') }}">
+            <span class="material-symbols-outlined text-[22px]">list_alt</span>
+            <span class="text-sm font-medium">Randevu Listesi</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors group" href="{{ url_for('admin.settings') }}">
+            <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">settings</span>
+            <span class="hidden lg:block text-sm font-medium">Ayarlar</span>
+        </a>
+        <div class="mt-8"></div>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors" href="{{ url_for('auth.logout') }}">
+            <span class="material-symbols-outlined text-[22px]">logout</span>
+            <span class="text-sm font-medium">Çıkış Yap</span>
+        </a>
+    </nav>
+    
+    <div class="border-t border-slate-100 dark:border-slate-800 my-4 mx-4"></div>
+    <div class="px-4">
+        <div class="bg-gradient-to-br from-slate-50 to-white dark:from-slate-800 dark:to-slate-800/50 rounded-xl p-4 text-center border border-slate-200 dark:border-slate-700">
+            <p class="text-xs font-bold text-slate-400 uppercase mb-3 tracking-wider">HIZLI İŞLEM</p>
+            <button onclick="openModal()" class="w-full bg-primary hover:bg-blue-600 text-white py-3 rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center gap-2 transform active:scale-95">
+                <span class="material-symbols-outlined text-[20px]">add_circle</span> Yeni Randevu
+            </button>
         </div>
-        <form id="editForm" class="p-6 space-y-5">
-            <input type="hidden" id="editId">
+    </div>
+</aside>
+
+<main class="flex-1 flex flex-col h-full min-w-0">
+    <header class="h-16 flex items-center justify-between px-6 bg-surface-light dark:bg-surface-dark border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
+        <div class="flex items-center flex-1 max-w-lg">
+            <div class="relative w-full max-w-sm group">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors">search</span>
+                <input class="w-full bg-background-light dark:bg-slate-800 border-none rounded-lg pl-10 pr-4 py-2 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-primary/20 placeholder:text-slate-400 transition-all" placeholder="Hasta veya randevu ara..." type="text"/>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+             <button class="relative p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors">
+                <span class="material-symbols-outlined">notifications</span>
+                <span class="absolute top-2 right-2 size-2 bg-red-500 rounded-full border border-white"></span>
+            </button>
+        </div>
+    </header>
+
+    <div class="flex-1 flex flex-col min-h-0 bg-background-light dark:bg-background-dark p-4 sm:p-6 overflow-hidden">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 flex-shrink-0">
+            <div>
+                <h2 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Randevu Takvimi</h2>
+                <div class="flex items-center gap-2 mt-1">
+                    <span class="material-symbols-outlined text-sm text-primary">calendar_today</span>
+                    <p class="text-sm font-semibold text-slate-500 dark:text-slate-400" id="currentDateLabel">Yükleniyor...</p>
+                </div>
+            </div>
             
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Hasta Adı</label>
-                    <input type="text" id="editName" name="guest_name" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-gray-500 outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Telefon</label>
-                    <input type="tel" id="editPhone" name="guest_phone" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-gray-500 outline-none">
+            <div class="flex items-center gap-3 bg-surface-light dark:bg-surface-dark p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                <button id="prevBtn" class="flex items-center justify-center size-9 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-500 transition-colors"><span class="material-symbols-outlined">chevron_left</span></button>
+                <button onclick="calendar.today()" class="px-4 py-1.5 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 rounded-lg transition">Bugün</button>
+                <button id="nextBtn" class="flex items-center justify-center size-9 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg text-slate-500 transition-colors"><span class="material-symbols-outlined">chevron_right</span></button>
+                <div class="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
+                <div class="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5">
+                    <button onclick="changeView('dayGridMonth')" class="view-btn px-3 py-1.5 rounded-md text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors" data-view="dayGridMonth">Ay</button>
+                    <button onclick="changeView('timeGridWeek')" class="view-btn px-3 py-1.5 rounded-md text-xs font-bold bg-white text-primary shadow-sm" data-view="timeGridWeek">Hafta</button>
+                    <button onclick="changeView('timeGridDay')" class="view-btn px-3 py-1.5 rounded-md text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors" data-view="timeGridDay">Gün</button>
                 </div>
             </div>
+        </div>
 
+        <div class="flex-1 bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col overflow-hidden relative">
+            <div id="adminCalendar" class="h-full w-full p-2"></div>
+        </div>
+    </div>
+</main>
+
+<div id="apptModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 transition-all backdrop-blur-sm p-4">
+    <div class="bg-white dark:bg-surface-dark rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden ring-1 ring-slate-900/5 modal-animate">
+        <div class="bg-gradient-to-r from-primary to-blue-600 px-8 py-5 flex justify-between items-start text-white">
             <div>
-                <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">İşlem</label>
-                <select id="editTitle" name="title" class="w-full border border-gray-300 rounded-lg p-2.5 bg-white focus:ring-2 focus:ring-gray-500 outline-none">
-                    <option value="Muayene">Muayene (30 dk)</option> <option value="Diş Taşı Temizliği">Diş Taşı Temizliği (30 dk)</option>
-                    <option value="Diş Çekimi">Diş Çekimi (30 dk)</option>
-                    <option value="Dolgu">Dolgu (45 dk)</option>
-                    <option value="Kanal Tedavisi">Kanal Tedavisi (60 dk)</option>
-                    <option value="İmplant">İmplant (90 dk)</option>
-                </select>
+                <h3 class="font-extrabold text-xl flex items-center gap-2" id="modalTitle"><span class="material-symbols-outlined">edit_calendar</span> Randevu Detayı</h3>
+                <p class="text-blue-100 text-sm mt-1 font-medium">İşlem detaylarını giriniz.</p>
             </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Tarih</label>
-                    <input type="date" id="editDate" name="appt_date" required class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-gray-500 outline-none">
+            <button onclick="closeModal()" class="text-white/80 hover:text-white rounded-lg p-1 transition-colors"><span class="material-symbols-outlined text-2xl">close</span></button>
+        </div>
+        
+        <form id="apptForm" class="p-8 space-y-6">
+            <input type="hidden" id="apptId" name="appt_id">
+            <div class="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-700">
+                <h4 class="text-xs font-bold text-slate-400 uppercase mb-3 flex items-center gap-1"><span class="material-symbols-outlined text-sm">person</span> Hasta Bilgileri</h4>
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="text" name="guest_name" id="guestName" placeholder="Ad Soyad" required class="w-full bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 rounded-lg p-3 text-sm font-semibold outline-none focus:ring-2 focus:ring-primary transition-all">
+                    <input type="text" name="guest_phone" id="guestPhone" placeholder="Telefon" class="w-full bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 rounded-lg p-3 text-sm font-semibold outline-none focus:ring-2 focus:ring-primary transition-all">
                 </div>
+            </div>
+            <div class="grid grid-cols-2 gap-6">
                 <div>
-                    <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Saat</label>
-                    <div class="relative">
-                        <input type="time" id="editTime" name="appt_time" required 
-                               class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-gray-500 outline-none cursor-pointer"
-                               onclick="showTimeSlots('edit')"
-                               autocomplete="off">
-                        <div class="absolute right-3 top-3 text-gray-400 pointer-events-none">
-                            <i class="fa-regular fa-clock"></i>
-                        </div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 ml-1">Tarih & Saat</label>
+                    <div class="flex flex-col gap-2">
+                        <input type="date" name="appt_date" id="apptDate" required class="w-full border-slate-200 dark:border-slate-600 rounded-lg p-2.5 text-sm font-bold text-slate-700 outline-none focus:border-primary">
+                        <input type="time" name="appt_time" id="apptTime" required class="w-full border-slate-200 dark:border-slate-600 rounded-lg p-2.5 text-sm font-bold text-slate-700 outline-none focus:border-primary">
                     </div>
                 </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 ml-1">İşlem</label>
+                    <select name="title" id="apptTitle" class="w-full h-[88px] border-slate-200 dark:border-slate-600 rounded-lg p-2.5 text-sm font-medium bg-white outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" size="4">
+                        <option value="Muayene" selected>🔍 Muayene</option>
+                        <option value="Diş Taşı Temizliği">✨ Diş Taşı Temizliği</option>
+                        <option value="Diş Çekimi">🦷 Diş Çekimi</option>
+                        <option value="Dolgu">⚒️ Dolgu</option>
+                        <option value="Kanal Tedavisi">⚡ Kanal Tedavisi</option>
+                        <option value="İmplant">⚙️ İmplant</option>
+                    </select>
+                </div>
             </div>
-
-            <div id="editTimeSlots" class="hidden grid grid-cols-4 gap-2 bg-gray-50 p-3 rounded-lg border border-gray-200 animate-fade-in"></div>
-
             <div>
-                <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Notlar</label>
-                <textarea id="editNotes" name="notes" rows="2" class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-gray-500 outline-none text-sm"></textarea>
+                <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 ml-1">Notlar</label>
+                <textarea name="notes" id="apptNotes" rows="2" class="w-full border-slate-200 dark:border-slate-600 rounded-lg p-3 text-sm outline-none focus:border-primary transition-all resize-none"></textarea>
             </div>
-
-            <div class="flex justify-between items-center pt-4 border-t border-gray-100 mt-2">
-                <div class="flex gap-2">
-                     <button type="button" onclick="deleteAppointment()" class="text-red-500 hover:text-red-700 text-sm font-semibold flex items-center gap-1 transition">
-                        <i class="fa-solid fa-trash"></i> Sil
-                    </button>
-                </div>
-
-                <div class="flex gap-2">
-                    <button type="button" id="patientCardBtn" class="bg-blue-100 text-blue-700 px-3 py-2 rounded-lg hover:bg-blue-200 transition hidden" title="Hasta Kartı">
-                        <i class="fa-solid fa-id-card"></i> Hasta Kartı
-                    </button>
-
-                    <button type="button" onclick="closeModal('editModal')" class="bg-gray-100 text-gray-600 px-4 py-2 rounded-lg hover:bg-gray-200 transition">Kapat</button>
-                    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 shadow-md transition">Güncelle</button>
-                </div>
+            
+            <div class="flex gap-4 pt-4 border-t border-slate-100 dark:border-slate-700 items-center">
+                <a id="detailBtn" href="#" class="hidden px-5 py-3 bg-blue-50 text-primary border border-blue-100 rounded-xl font-bold hover:bg-blue-100 transition-colors flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-[20px]">visibility</span> Detay
+                </a>
+                
+                <button type="button" id="deleteBtn" onclick="deleteAppointment()" class="hidden px-5 py-3 bg-red-50 text-red-600 rounded-xl font-bold hover:bg-red-100 transition-colors flex items-center gap-2"><span class="material-symbols-outlined text-[20px]">delete</span> Sil</button>
+                <button type="submit" class="flex-1 px-6 py-3 bg-primary text-white rounded-xl font-bold hover:bg-blue-600 transition-all shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 transform active:scale-95 text-base"><span class="material-symbols-outlined">save</span> Kaydet</button>
             </div>
         </form>
     </div>
 </div>
-{% endblock %}
 
-{% block scripts %}
 <script>
-    // Global Takvim Değişkeni (Erişilebilir olsun diye dışarı aldık)
-    var calendar; 
+    var calendar;
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    
+    // Ghost Element
+    var ghostEl = null;
 
     document.addEventListener('DOMContentLoaded', function() {
-        var calendarEl = document.getElementById('calendar');
+        var calendarEl = document.getElementById('adminCalendar');
+        
         calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'timeGridWeek',
             locale: 'tr',
-            firstDay: 1,
-            slotMinTime: '09:00:00',
-            slotMaxTime: '19:00:00',
+            firstDay: 1, 
+            slotMinTime: '08:00:00',
+            slotMaxTime: '20:00:00',
             slotDuration: '00:30:00',
             allDaySlot: false,
-            headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
-            events: '/api/appointments', // Veri kaynağı
-            dateClick: function(info) { openCreateModal(info.dateStr); },
-            eventClick: function(info) { openEditModal(info.event); }
+            height: '100%',
+            headerToolbar: false,
+            expandRows: true,
+            
+            events: '/api/appointments',
+            editable: true,
+            droppable: true,
+            
+            eventContent: function(arg) {
+                let title = arg.event.title;
+                let procedure = arg.event.extendedProps.procedure || arg.event.title.split('-')[1] || 'İşlem';
+                let patientName = arg.event.extendedProps.guest_name || arg.event.title.split('-')[0] || 'Hasta';
+                
+                let borderColor = '#3b82f6'; let bgColor = '#eff6ff'; let textColor = '#1d4ed8';
+                if(procedure.includes('Kanal')) { borderColor = '#ef4444'; bgColor = '#fef2f2'; textColor='#b91c1c'; }
+                else if(procedure.includes('Temizliği')) { borderColor = '#10b981'; bgColor = '#ecfdf5'; textColor='#047857'; }
+                else if(procedure.includes('İmplant')) { borderColor = '#8b5cf6'; bgColor = '#f5f3ff'; textColor='#6d28d9'; }
+                else if(procedure.includes('Dolgu')) { borderColor = '#f97316'; bgColor = '#fff7ed'; textColor='#c2410c'; }
+
+                let html = `
+                    <div style="border-left: 4px solid ${borderColor}; background: ${bgColor}; height: 100%; padding: 6px; border-radius: 4px; display: flex; flex-direction: column; justify-content: center;">
+                        <div style="font-weight: 800; font-size: 0.85rem; color: #0f172a; line-height: 1.2;">${patientName}</div>
+                        <div style="font-size: 0.75rem; font-weight: 600; color: ${textColor}; margin-top: 2px;">${procedure}</div>
+                        <div style="font-size: 0.7rem; color: #64748b; margin-top: auto; display: flex; align-items: center; gap: 2px;">
+                            <span class="material-symbols-outlined" style="font-size: 10px;">schedule</span> ${arg.timeText}
+                        </div>
+                    </div>
+                `;
+                return { html: html };
+            },
+
+            dateClick: function(info) { openModal(null, info.dateStr); },
+            eventClick: function(info) { openModal(info.event); },
+            eventDrop: function(info) { updateEventDrop(info.event, info.revert); },
+            datesSet: function(info) {
+                const titleEl = document.getElementById('currentDateLabel');
+                const start = info.view.currentStart;
+                titleEl.innerText = start.toLocaleDateString('tr-TR', { year: 'numeric', month: 'long', day: 'numeric' });
+                setTimeout(initGhostCursor, 500); 
+            }
         });
+        
         calendar.render();
 
-        // Form Submit Olayları
-        document.getElementById('createForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            await sendData('/api/appointments/create', new FormData(this), 'createModal');
-        });
+        function initGhostCursor() {
+            if(ghostEl) ghostEl.remove();
+            ghostEl = document.createElement('div');
+            ghostEl.className = 'ghost-event';
+            ghostEl.innerHTML = '<span><span class="material-symbols-outlined text-sm">add</span> Randevu</span>';
+            ghostEl.style.display = 'none';
+            const container = document.querySelector('.fc-timegrid-body'); 
+            if(container) container.appendChild(ghostEl);
 
-        document.getElementById('editForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const id = document.getElementById('editId').value;
-            await sendData(`/api/appointments/${id}/update`, new FormData(this), 'editModal');
-        });
+            const gridBody = document.querySelector('.fc-timegrid-body');
+            if(gridBody) {
+                gridBody.addEventListener('mousemove', function(e) {
+                    if(!['timeGridWeek', 'timeGridDay'].includes(calendar.view.type)) { ghostEl.style.display = 'none'; return; }
+                    const slotsTable = document.querySelector('.fc-timegrid-slots table');
+                    const colsTable = document.querySelector('.fc-timegrid-cols table');
+                    if(!slotsTable || !colsTable) return;
+
+                    const bodyRect = gridBody.getBoundingClientRect();
+                    const mouseX = e.clientX - bodyRect.left;
+                    const mouseY = e.clientY - bodyRect.top;
+
+                    if (mouseX < 0 || mouseY < 0 || mouseX > bodyRect.width || mouseY > bodyRect.height) { ghostEl.style.display = 'none'; return; }
+
+                    const cols = colsTable.querySelectorAll('th, td.fc-timegrid-col');
+                    let targetCol = null;
+                    for(let col of cols) {
+                        const colRect = col.getBoundingClientRect();
+                        const relativeLeft = colRect.left - bodyRect.left;
+                        if(mouseX >= relativeLeft && mouseX < relativeLeft + colRect.width) {
+                            targetCol = { left: relativeLeft, width: colRect.width };
+                            break;
+                        }
+                    }
+
+                    const rows = slotsTable.querySelectorAll('tr');
+                    if(rows.length === 0) return;
+                    const slotHeight = rows[0].getBoundingClientRect().height; 
+                    const rowIndex = Math.floor(mouseY / slotHeight);
+                    const snapTop = rowIndex * slotHeight;
+
+                    if (targetCol && mouseY >= 0 && snapTop < bodyRect.height) {
+                        ghostEl.style.display = 'flex';
+                        ghostEl.style.width = (targetCol.width - 4) + 'px';
+                        ghostEl.style.height = (slotHeight - 2) + 'px';
+                        ghostEl.style.left = (targetCol.left + 2) + 'px';
+                        ghostEl.style.top = (snapTop + 1) + 'px';
+                    } else {
+                        ghostEl.style.display = 'none';
+                    }
+                });
+                gridBody.addEventListener('mouseleave', () => { ghostEl.style.display = 'none'; });
+            }
+        }
+
+        document.getElementById('prevBtn').addEventListener('click', () => calendar.prev());
+        document.getElementById('nextBtn').addEventListener('click', () => calendar.next());
+        document.getElementById('apptForm').addEventListener('submit', handleFormSubmit);
     });
 
-    // --- OPTİMİZE EDİLMİŞ VERİ GÖNDERME ---
-    async function sendData(url, formData, modalId) {
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        
-        // Butonu "Kaydediliyor..." yap (Geri bildirim için)
-        const btn = document.querySelector(`#${modalId} button[type="submit"]`);
-        const originalText = btn.innerText;
-        btn.innerText = "İşleniyor...";
-        btn.disabled = true;
+    function changeView(viewName) {
+        calendar.changeView(viewName);
+        document.querySelectorAll('.view-btn').forEach(btn => {
+            btn.className = btn.dataset.view === viewName 
+                ? "view-btn px-3 py-1.5 rounded-md text-xs font-bold bg-white text-primary shadow-sm"
+                : "view-btn px-3 py-1.5 rounded-md text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors";
+        });
+    }
 
-        try {
-            const res = await fetch(url, { 
-                method: 'POST', 
-                headers: { 'X-CSRFToken': csrfToken },
-                body: formData 
-            });
-            const data = await res.json();
+    // --- Modal Fonksiyonları ---
+    function openModal(event = null, dateStr = null) {
+        const modal = document.getElementById('apptModal');
+        const form = document.getElementById('apptForm');
+        const deleteBtn = document.getElementById('deleteBtn');
+        const detailBtn = document.getElementById('detailBtn'); // <--- YENİ
+        const title = document.getElementById('modalTitle');
+
+        modal.classList.remove('hidden');
+        
+        if(event) {
+            title.innerHTML = '<span class="material-symbols-outlined">edit_calendar</span> Randevu Düzenle';
+            deleteBtn.classList.remove('hidden');
             
-            if (data.status === 'success') {
-                // SAYFAYI YENİLEME YOK! SADECE TAKVİMİ GÜNCELLE
-                closeModal(modalId);
-                calendar.refetchEvents(); // <--- SİHİRLİ KOMUT (Milisaniyede yeniler)
-                
-                // Formu temizle (Sadece create ise)
-                if(modalId === 'createModal') document.getElementById('createForm').reset();
-                
-            } else {
-                alert('Hata: ' + data.message);
-            }
-        } catch (err) { 
-            console.error(err); 
-            alert('Sunucu hatası!'); 
-        } finally {
-            // Butonu eski haline getir
-            btn.innerText = originalText;
-            btn.disabled = false;
-        }
-    }
-
-    // --- Modal İşlemleri (Aynı kaldı) ---
-    function openCreateModal(dateStr) {
-        if(dateStr) {
-            let date = new Date(dateStr);
-            let yyyy = date.getFullYear();
-            let mm = String(date.getMonth() + 1).padStart(2, '0');
-            let dd = String(date.getDate()).padStart(2, '0');
-            let hh = String(date.getHours()).padStart(2, '0');
-            let min = String(date.getMinutes()).padStart(2, '0');
-
-            document.getElementById('createDate').value = `${yyyy}-${mm}-${dd}`;
-            document.getElementById('createTime').value = `${hh}:${min}`;
-        }
-        document.getElementById('createModal').classList.remove('hidden');
-        document.getElementById('createTimeSlots').classList.add('hidden');
-    }
-
-    function openEditModal(event) {
-        const props = event.extendedProps;
-        document.getElementById('editId').value = event.id;
-        document.getElementById('editName').value = props.guest_name;
-        document.getElementById('editPhone').value = props.guest_phone;
-        document.getElementById('editTitle').value = props.procedure;
-        document.getElementById('editNotes').value = props.notes;
-        
-        const start = event.start;
-        if (start) {
-            let yyyy = start.getFullYear();
-            let mm = String(start.getMonth() + 1).padStart(2, '0');
-            let dd = String(start.getDate()).padStart(2, '0');
-            let hh = String(start.getHours()).padStart(2, '0');
-            let min = String(start.getMinutes()).padStart(2, '0');
-
-            document.getElementById('editDate').value = `${yyyy}-${mm}-${dd}`;
-            document.getElementById('editTime').value = `${hh}:${min}`;
-        }
-
-        const patientBtn = document.getElementById('patientCardBtn');
-        if (props.user_id) {
-            patientBtn.onclick = () => window.location.href = `/admin/patient/${props.user_id}`;
-            patientBtn.classList.remove('hidden');
+            // --- DETAY BUTONUNU GÖSTER VE LİNKİ AYARLA ---
+            detailBtn.classList.remove('hidden');
+            detailBtn.href = `/admin/appointment/${event.id}`;
+            
+            document.getElementById('apptId').value = event.id;
+            document.getElementById('guestName').value = event.extendedProps.guest_name || "";
+            document.getElementById('guestPhone').value = event.extendedProps.guest_phone || "";
+            document.getElementById('apptTitle').value = event.extendedProps.procedure || "Muayene";
+            document.getElementById('apptNotes').value = event.extendedProps.notes || "";
+            const dt = event.start;
+            document.getElementById('apptDate').value = dt.toISOString().split('T')[0];
+            document.getElementById('apptTime').value = dt.toTimeString().slice(0,5);
         } else {
-            patientBtn.classList.add('hidden');
+            form.reset();
+            title.innerHTML = '<span class="material-symbols-outlined">add_circle</span> Yeni Randevu';
+            deleteBtn.classList.add('hidden');
+            
+            // --- YENİ RANDEVUDA DETAY BUTONUNU GİZLE ---
+            detailBtn.classList.add('hidden');
+            
+            document.getElementById('apptId').value = "";
+            if(dateStr) {
+                const dt = new Date(dateStr);
+                document.getElementById('apptDate').value = dt.toISOString().split('T')[0];
+                document.getElementById('apptTime').value = dt.toTimeString().slice(0,5);
+            }
         }
-        
-        document.getElementById('editModal').classList.remove('hidden');
-        document.getElementById('editTimeSlots').classList.add('hidden');
     }
 
-    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+    function closeModal() { document.getElementById('apptModal').classList.add('hidden'); }
 
-    function showTimeSlots(prefix) {
-        const container = document.getElementById(prefix + 'TimeSlots');
-        const input = document.getElementById(prefix + 'Time');
-        if (!container.classList.contains('hidden')) { container.classList.add('hidden'); return; }
-        container.classList.remove('hidden');
-        container.innerHTML = '';
-        const startHour = 9; const endHour = 18;
-        for (let h = startHour; h <= endHour; h++) {
-            ['00', '30'].forEach(m => {
-                if(h === endHour && m === '30') return;
-                const timeStr = `${String(h).padStart(2, '0')}:${m}`;
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = 'text-sm py-2 px-1 rounded-md hover:bg-indigo-600 hover:text-white bg-white border border-gray-200 text-gray-700 transition font-medium text-center';
-                btn.innerText = timeStr;
-                btn.onclick = () => { input.value = timeStr; container.classList.add('hidden'); };
-                container.appendChild(btn);
-            });
-        }
+    async function handleFormSubmit(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const id = document.getElementById('apptId').value;
+        const url = id ? `/api/appointments/${id}/update` : '/api/appointments/create';
+        try {
+            const res = await fetch(url, { method: 'POST', headers: { 'X-CSRFToken': csrfToken }, body: formData });
+            const data = await res.json();
+            if(data.status === 'success') { closeModal(); calendar.refetchEvents(); } else { alert(data.message); }
+        } catch(err) { console.error(err); }
     }
 
     async function deleteAppointment() {
         if(!confirm("Emin misiniz?")) return;
-        const id = document.getElementById('editId').value;
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        try {
-            const res = await fetch(`/api/appointments/${id}/delete`, {
-                method: 'POST',
-                headers: { 'X-CSRFToken': csrfToken }
-            });
-            const data = await res.json();
-            if (data.status === 'success') {
-                closeModal('editModal');
-                calendar.refetchEvents(); // Sayfa yenilemeden sil
-            } else {
-                alert('Hata: ' + data.message);
-            }
-        } catch (err) { console.error(err); alert('Hata!'); }
+        const id = document.getElementById('apptId').value;
+        await fetch(`/api/appointments/${id}/delete`, { method: 'POST', headers: { 'X-CSRFToken': csrfToken } });
+        closeModal(); calendar.refetchEvents();
+    }
+
+    async function updateEventDrop(event, revertFunc) {
+        if(!confirm("Tarihi güncellemek istiyor musunuz?")) { revertFunc(); return; }
+        const formData = new FormData();
+        const dt = event.start;
+        formData.append('appt_date', dt.toISOString().split('T')[0]);
+        formData.append('appt_time', dt.toTimeString().slice(0,5));
+        await fetch(`/api/appointments/${event.id}/update`, { method: 'POST', headers: { 'X-CSRFToken': csrfToken }, body: formData });
     }
 </script>
-{% endblock %}
+</body>
+</html>

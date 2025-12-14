@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html class="light" lang="tr">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Ayarlar · Yönetim Paneli</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface": "#ffffff",
+                        "text-main": "#0d141b",
+                        "text-secondary": "#4c739a",
+                        "border-color": "#e7edf3",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    </style>
+</head>
+<body class="bg-background-light text-text-main font-display h-screen flex overflow-hidden">
+
+<aside class="w-20 lg:w-64 bg-surface border-r border-border-color flex flex-col justify-between h-full shrink-0 hidden md:flex">
+    <div class="p-6 pb-2 border-b border-border-color/50">
+        <div class="flex items-center gap-3">
+            <div class="bg-primary/10 text-primary rounded-xl size-10 flex items-center justify-center font-bold text-lg">
+                {{ current_user.full_name[0] | upper }}
+            </div>
+            <div class="hidden lg:flex flex-col">
+                <h1 class="text-sm font-bold truncate w-32">{{ current_user.full_name }}</h1>
+                <p class="text-xs text-text-secondary">Yönetici Paneli</p>
+            </div>
+        </div>
+    </div>
+    
+    <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+        <a href="{{ url_for('admin.dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-text-secondary hover:bg-background-light hover:text-primary transition-colors">
+            <span class="material-symbols-outlined">dashboard</span> <span class="hidden lg:block">Panel</span>
+        </a>
+        <a href="{{ url_for('admin.calendar_view') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-text-secondary hover:bg-background-light hover:text-primary transition-colors">
+            <span class="material-symbols-outlined">calendar_month</span> <span class="hidden lg:block">Takvim</span>
+        </a>
+        <a href="{{ url_for('admin.appointment_list') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-text-secondary hover:bg-background-light hover:text-primary transition-colors">
+            <span class="material-symbols-outlined">list_alt</span> <span class="hidden lg:block">Randevular</span>
+        </a>
+        <a href="{{ url_for('admin.patients_list') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-text-secondary hover:bg-background-light hover:text-primary transition-colors">
+            <span class="material-symbols-outlined">group</span> <span class="hidden lg:block">Hastalar</span>
+        </a>
+        <a href="{{ url_for('admin.settings') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary font-bold">
+            <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">settings</span> <span class="hidden lg:block">Ayarlar</span>
+        </a>
+    </nav>
+
+    <div class="p-4 border-t border-border-color">
+        <a href="{{ url_for('auth.logout') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors">
+            <span class="material-symbols-outlined">logout</span> <span class="hidden lg:block">Çıkış</span>
+        </a>
+    </div>
+</aside>
+
+<main class="flex-1 flex flex-col min-w-0 overflow-hidden relative bg-background-light">
+    
+    <header class="h-16 bg-surface border-b border-border-color flex items-center justify-between px-6 lg:px-10 shrink-0">
+        <h2 class="text-lg font-bold">Klinik Ayarları</h2>
+        <div class="flex items-center gap-3">
+            <button class="relative p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors">
+                <span class="material-symbols-outlined">notifications</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-4 lg:p-8">
+        <div class="max-w-6xl mx-auto w-full flex flex-col md:flex-row gap-8">
+            
+            <div class="w-full md:w-64 flex-shrink-0">
+                <div class="sticky top-4">
+                    <h1 class="text-3xl font-black mb-2 tracking-tight">Ayarlar</h1>
+                    <p class="text-text-secondary text-sm mb-6">Klinik tercihlerinizi ve sistem ayarlarınızı buradan yönetin.</p>
+                    
+                    <nav class="flex flex-col gap-1 bg-surface p-2 rounded-xl shadow-sm border border-border-color">
+                        <a class="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary/10 text-primary font-bold transition-colors" href="#general">
+                            <span class="material-symbols-outlined">storefront</span>
+                            <span>Genel Bilgiler</span>
+                        </a>
+                        <a class="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary/10 text-primary font-bold transition-colors" href="#hours">
+                            <span class="material-symbols-outlined">schedule</span>
+                            <span>Çalışma Saatleri</span>
+                        </a>
+                        <a class="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary/10 text-primary font-bold transition-colors" href="#security">
+                            <span class="material-symbols-outlined">shield</span>
+                            <span>Hesap ve Güvenlik</span>
+                        </a>
+                    </nav>
+                </div>
+            </div>
+
+            <div class="flex-1 flex flex-col gap-6 pb-10">
+                
+                <section class="bg-surface rounded-xl shadow-sm border border-border-color p-6 md:p-8" id="general">
+                    <div class="flex items-center justify-between mb-6 border-b border-border-color pb-4">
+                        <h3 class="text-xl font-bold">Klinik Bilgileri</h3>
+                        <span class="material-symbols-outlined text-text-secondary">storefront</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <label class="flex flex-col gap-2">
+                            <span class="text-sm font-semibold text-text-main">Klinik Adı</span>
+                            <input class="w-full h-12 px-4 rounded-lg border border-border-color bg-background-light focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" type="text" value="Yılmaz Diş Polikliniği"/>
+                        </label>
+                        <label class="flex flex-col gap-2">
+                            <span class="text-sm font-semibold text-text-main">E-posta Adresi</span>
+                            <input class="w-full h-12 px-4 rounded-lg border border-border-color bg-background-light focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" type="email" value="info@yilmazklinik.com"/>
+                        </label>
+                        <label class="flex flex-col gap-2">
+                            <span class="text-sm font-semibold text-text-main">Telefon Numarası</span>
+                            <input class="w-full h-12 px-4 rounded-lg border border-border-color bg-background-light focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" type="tel" value="+90 212 555 0123"/>
+                        </label>
+                        <label class="flex flex-col gap-2">
+                            <span class="text-sm font-semibold text-text-main">Web Sitesi</span>
+                            <input class="w-full h-12 px-4 rounded-lg border border-border-color bg-background-light focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" placeholder="https://..." type="url"/>
+                        </label>
+                    </div>
+                    <label class="flex flex-col gap-2 mb-6">
+                        <span class="text-sm font-semibold text-text-main">Adres</span>
+                        <textarea class="w-full min-h-[100px] p-4 rounded-lg border border-border-color bg-background-light focus:border-primary focus:ring-1 focus:ring-primary outline-none resize-y transition-all">Cumhuriyet Mah. Atatürk Cad. No: 123/B, Şişli, İstanbul</textarea>
+                    </label>
+                    <div class="flex justify-end">
+                        <button class="bg-primary hover:bg-blue-600 text-white font-bold py-2.5 px-6 rounded-lg transition-colors shadow-md">
+                            Kaydet
+                        </button>
+                    </div>
+                </section>
+
+                <section class="bg-surface rounded-xl shadow-sm border border-border-color p-6 md:p-8" id="hours">
+                    <div class="flex items-center justify-between mb-6 border-b border-border-color pb-4">
+                        <h3 class="text-xl font-bold">Çalışma Saatleri</h3>
+                        <span class="material-symbols-outlined text-text-secondary">date_range</span>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="hidden md:grid grid-cols-12 gap-4 text-sm text-text-secondary font-medium pb-2">
+                            <div class="col-span-3">Gün</div>
+                            <div class="col-span-3">Durum</div>
+                            <div class="col-span-3">Başlangıç</div>
+                            <div class="col-span-3">Bitiş</div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center p-3 rounded-lg border border-border-color bg-background-light/50">
+                            <div class="col-span-12 md:col-span-3 font-semibold">Hafta İçi</div>
+                            <div class="col-span-6 md:col-span-3">
+                                <span class="px-2 py-1 rounded text-xs font-bold bg-green-100 text-green-700">Açık</span>
+                            </div>
+                            <div class="col-span-6 md:col-span-3">
+                                <input class="w-full bg-transparent border-b border-gray-300 focus:border-primary outline-none py-1" type="time" value="09:00"/>
+                            </div>
+                            <div class="col-span-6 md:col-span-3">
+                                <input class="w-full bg-transparent border-b border-gray-300 focus:border-primary outline-none py-1" type="time" value="18:00"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-end mt-6">
+                        <button class="bg-primary hover:bg-blue-600 text-white font-bold py-2.5 px-6 rounded-lg transition-colors shadow-md">
+                            Saatleri Güncelle
+                        </button>
+                    </div>
+                </section>
+
+                <section class="bg-surface rounded-xl shadow-sm border border-border-color p-6 md:p-8" id="security">
+                    <div class="flex items-center justify-between mb-6 border-b border-border-color pb-4">
+                        <h3 class="text-xl font-bold">Hesap ve Güvenlik</h3>
+                        <span class="material-symbols-outlined text-text-secondary">shield</span>
+                    </div>
+                    <div class="max-w-md">
+                        <h4 class="font-bold mb-4 text-sm text-text-secondary uppercase tracking-wider">Şifre Değiştir</h4>
+                        <div class="space-y-4">
+                            <label class="block">
+                                <span class="text-sm font-semibold text-text-main">Mevcut Şifre</span>
+                                <input class="mt-1 w-full h-12 px-4 rounded-lg border border-border-color bg-background-light focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" type="password"/>
+                            </label>
+                            <label class="block">
+                                <span class="text-sm font-semibold text-text-main">Yeni Şifre</span>
+                                <input class="mt-1 w-full h-12 px-4 rounded-lg border border-border-color bg-background-light focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" type="password"/>
+                            </label>
+                            <label class="block">
+                                <span class="text-sm font-semibold text-text-main">Yeni Şifre (Tekrar)</span>
+                                <input class="mt-1 w-full h-12 px-4 rounded-lg border border-border-color bg-background-light focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" type="password"/>
+                            </label>
+                        </div>
+                        <div class="mt-6">
+                            <button class="bg-white hover:bg-gray-50 text-text-main border border-border-color font-bold py-2.5 px-6 rounded-lg transition-colors">
+                                Şifreyi Güncelle
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </div>
+    </div>
+</main>
+
+</body>
+</html>

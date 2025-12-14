@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html class="light" lang="tr">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Hasta Listesi · Yönetim Paneli</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = { darkMode: "class", theme: { extend: { colors: { "primary": "#137fec", "surface": "#ffffff", "background-light": "#f6f7f8", "background-dark": "#101922" }, fontFamily: { "display": ["Manrope", "sans-serif"] } } } }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display transition-colors duration-200 h-screen flex overflow-hidden">
+
+<aside class="w-72 bg-surface-light dark:bg-surface-dark border-r border-slate-200 dark:border-slate-700 flex flex-col flex-shrink-0 h-full overflow-y-auto hidden md:flex">
+    <div class="p-6 pb-2">
+        <div class="flex items-center gap-3 mb-6">
+            <div class="bg-primary/10 text-primary rounded-xl size-10 flex items-center justify-center font-bold text-lg">
+                {{ current_user.full_name[0] | upper }}
+            </div>
+            <div class="flex flex-col">
+                <h1 class="text-base font-bold leading-tight">{{ current_user.full_name }}</h1>
+                <p class="text-slate-500 dark:text-slate-400 text-xs font-medium">Yönetici Paneli</p>
+            </div>
+        </div>
+    </div>
+    
+    <nav class="flex flex-col gap-1 px-4">
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" href="{{ url_for('admin.dashboard') }}">
+            <span class="material-symbols-outlined text-[22px]">dashboard</span>
+            <span class="text-sm font-medium">Kontrol Paneli</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" href="{{ url_for('admin.calendar_view') }}">
+            <span class="material-symbols-outlined text-[22px]">calendar_month</span>
+            <span class="text-sm font-medium">Takvim</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" href="{{ url_for('admin.appointment_list') }}">
+            <span class="material-symbols-outlined text-[22px]">list_alt</span>
+            <span class="text-sm font-medium">Randevu Listesi</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary font-bold group" href="{{ url_for('admin.patients_list') }}">
+            <span class="material-symbols-outlined text-[22px]" style="font-variation-settings: 'FILL' 1;">group</span>
+            <span class="text-sm font-semibold">Hastalar</span>
+        </a>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors group" href="{{ url_for('admin.settings') }}">
+            <span class="material-symbols-outlined text-[22px] group-hover:scale-110 transition-transform">settings</span>
+            <span class="hidden lg:block text-sm font-medium">Ayarlar</span>
+        </a>
+        
+        <div class="mt-8"></div>
+        <a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-red-50 hover:text-red-600 transition-colors" href="{{ url_for('auth.logout') }}">
+            <span class="material-symbols-outlined text-[22px]">logout</span>
+            <span class="text-sm font-medium">Çıkış Yap</span>
+        </a>
+    </nav>
+</aside>
+
+<main class="flex-1 flex flex-col h-full min-w-0">
+    <header class="h-16 flex items-center justify-between px-6 bg-surface-light dark:bg-surface-dark border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
+        <h2 class="text-lg font-bold">Kayıtlı Hasta Listesi</h2>
+        <div class="text-sm text-slate-500">Toplam {{ patients|length }} kayıt</div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-8">
+        <div class="bg-surface-light dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+            <table class="w-full text-left">
+                <thead class="bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-500 uppercase border-b border-slate-200 dark:border-slate-700">
+                    <tr>
+                        <th class="p-4 pl-6">Hasta Adı</th>
+                        <th class="p-4">Telefon</th>
+                        <th class="p-4">E-Posta</th>
+                        <th class="p-4">Kayıt Tarihi</th>
+                        <th class="p-4 text-right pr-6">İşlem</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-700 text-sm">
+                    {% for p in patients %}
+                    <tr class="group hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                        <td class="p-4 pl-6 font-bold text-primary">
+                            <a href="{{ url_for('admin.patient_detail', user_id=p.id) }}" class="hover:underline flex items-center gap-2">
+                                <span class="size-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 text-xs font-bold">
+                                    {{ p.full_name[0] | upper }}
+                                </span>
+                                {{ p.full_name }}
+                            </a>
+                        </td>
+                        <td class="p-4 text-slate-600 dark:text-slate-300">{{ p.phone }}</td>
+                        <td class="p-4 text-slate-500">{{ p.email }}</td>
+                        <td class="p-4 text-slate-500">{{ p.created_at.strftime('%d.%m.%Y') }}</td>
+                        <td class="p-4 pr-6 text-right">
+                            <a href="{{ url_for('admin.patient_detail', user_id=p.id) }}" class="px-3 py-1.5 border border-slate-200 dark:border-slate-600 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                                Detay Görüntüle
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="p-12 text-center text-slate-400">
+                            <div class="flex flex-col items-center gap-2">
+                                <span class="material-symbols-outlined text-4xl opacity-50">person_off</span>
+                                <p>Henüz kayıtlı hasta bulunmuyor.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+</body>
+</html>
